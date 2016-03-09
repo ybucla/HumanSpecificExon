@@ -1,0 +1,20 @@
+#! /u/home/y/ybwang/perl
+
+# get floss value for each region, against with coding region of known gene
+
+use strict;
+use warnings;
+use File::Basename;
+use Data::Table;
+use 5.010;
+
+# store human specific exon to hash, key: 'chr1:9671073:9671131:+'
+my %hash = ();
+my $t = Data::Table::fromFile('./human_specific_exon.2073.txt');
+my @info = $t->col(0);
+my @id = $t->col(4);
+foreach(0..$#info){
+	my @ar = split /:/, $info[$_];
+	say 'chr',$ar[0],"\t",$ar[1]-1,"\t",$ar[2],"\t",$id[$_],"\t",0,"\t",$ar[3];
+}
+
