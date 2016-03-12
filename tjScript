@@ -1,0 +1,62 @@
+#! /u/home/y/ybwang/perl
+
+# get floss value for each region, against with coding region of known gene
+
+use strict;
+use warnings;
+use File::Basename;
+use Data::Table;
+use 5.010;
+
+tjRNAJunction($ARGV[0]);
+
+sub tjRNAJunction {
+	my $in = shift;
+	
+	my $n = 1;
+	my @rawfiles = `ls cometout/`;
+        foreach(@rawfiles){
+                chomp;
+		next if defined($in) && $n != $in;
+		my $bamfile = "RNA/".$_."/Aligned.out.sorted.bam";
+		$bamfile = "/u/home/y/ybwang/scratch/Mathias_Wilhelm/rna/".$_."/star_out/Aligned.out.sorted.bam" if $_ =~ /lymph/;
+		say $_;
+		my @result = `samtools view $bamfile | awk -F '\\t' '\$6 ~ /N/' | cut -f 1 | sort | uniq | wc -l`;
+                print $result[0];
+		
+		$n++;
+        }
+}
+
+sub tjPercolaotr {
+	my $in = shift;
+
+	my $n = 1;
+        my @rawfiles = `ls cometout/`;
+        foreach(@rawfiles){
+                chomp;
+		next if defined($in) && $n != $in;		
+
+		my $identityfile = 'massDb/identity/identify_'.$_.'.fa';
+	        my $percolatorfile = 'cometout/'.$_.'/0.05/*.0.05.pep.percolator';
+
+        	my $reg = 'chr';
+	        my @identityhead = `cut -f 2 $identityfile | sort | uniq`;
+        	foreach(@identityhead){
+	                chomp;
+                	$reg = $reg.'|'.$_;
+        	}
+
+        	my @n1 = `awk -F '\\t' '\$3 < 0.05' $percolatorfile | cut -f 6 | sort | uniq | wc -l`;
+	        my @n2 = `awk -F '\\t' '\$3 < 0.05' $percolatorfile | awk -F '\\t' '\$6 ~ /$reg/' | cut -f 6 | sort | uniq | wc -l`;
+        	my @m1 = `awk -F '\\t' '\$3 < 0.05' $percolatorfile | sort | uniq | wc -l`;
+	        my @m2 = `awk -F '\\t' '\$3 < 0.05' $percolatorfile | awk -F '\\t' '\$6 ~ /$reg/' | sort | uniq | wc -l`;
+	        print "======", $_, "\n";
+	        print "Protein number:\t", $n1[0];
+        	print "Junction number:\t", $n2[0];
+	        print "PSM number:\t", $m1[0];
+        	print "Junction PSM number:\t", $m2[0];
+		
+		$n++;
+        }
+}
