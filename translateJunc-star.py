@@ -55,9 +55,10 @@ def main():
 						out.write(id_line + '_ORF:' + str(j) + '\n' + tr_prot_seq + '\n')
 				chr_juncs = [junc[1:]]
 				last_chr = chr
-		print "# stop and 5 less pep:\t"+str(np)
+		print "# stop and 5 aa less pep:\t"+str(np)
 
 def trim_prot(prot_seq, trim_RK = True):
+	#print "protein len:\t", prot_seq,"\t",len(prot_seq),"\t",
 	splice_site = ''.join(x for x in prot_seq if x.islower())  # must contain splice site
 	
 	if len(splice_site) < 1:
@@ -74,7 +75,7 @@ def trim_prot(prot_seq, trim_RK = True):
 		right_end = len(right)
 	
 	prot_seq = prot_seq[left_start : len(left) + right_end + 1]
-	
+	#print prot_seq,"\t",len(prot_seq)
 	if not trim_RK:
 		return prot_seq
 	
@@ -202,7 +203,7 @@ def read_junctions(file, reads, min_reads):  # [chr, id, strand, left_junction, 
 def junctionReads(sam_fn):  # bam file input
 # store reads id that mapped to human_epcific_exon to a dict
 	exonid = {}
-	d = subprocess.Popen('bedtools intersect -a data/human_specific_exon.2073.sorted.bed -b ' + sam_fn + ' -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	d = subprocess.Popen('bedtools intersect -a data/hg19_repeatMasker_Alu.sorted.bed -b ' + sam_fn + ' -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	for line in d.stdout.readlines():
 		line = line.rstrip()
 		ele = line.split()
@@ -217,13 +218,15 @@ def junctionReads(sam_fn):  # bam file input
 	exon_juncid = {}
 	junctionReads = defaultdict(list) # junctionReads[chr_start_end] =[list of read ids that span junction]
 	p = subprocess.Popen('samtools view -q 255 ' + sam_fn, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	ntmp = 0
 	for line in p.stdout.readlines():
 		line = line.rstrip()
-		if ((not line.startswith('@')) and ('N' in line.split()[5])): #not a header line and read spans a splice junction		
+		if ((not line.startswith('@')) and ('N' in line.split()[5])): #not a header line and read spans a splice junction
 			ele = line.split()
 			bamid = ele[0]
 			if (bamid not in exonid):
 				continue
+			ntmp += 1
 			exon_juncid[bamid] = exonid[bamid]
 			cigar = ele[5] # format xMyNzM
 			exon_lengths = re.findall(r"(\d+M)",cigar) #[list of exon lengths]
@@ -238,7 +241,7 @@ def junctionReads(sam_fn):  # bam file input
 				pos = jE
 	retval = p.wait()
 # print count
-	print '# junction reads mapping number:\t'+str(len(exon_juncid))
+	print '# junction reads mapping number:\t'+str(len(exon_juncid)) + "\t" + str(ntmp)
 	print '# junction number:\t'+str(len(junctionReads))
 # end of looping through sam file
 	return junctionReads	
