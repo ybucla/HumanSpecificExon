@@ -11,8 +11,8 @@ use 5.010;
 #translateJuncStar($ARGV[0]);
 #removeIdenJunc($ARGV[0]);
 #callCometSearch($ARGV[0],$ARGV[1]);
-#callPercolator($ARGV[0]);
-callJunctionReadsNumber($ARGV[0]);
+callPercolator($ARGV[0]);
+#callJunctionReadsNumber($ARGV[0]);
 
 sub translateJuncStar {
 	my $in = shift;
@@ -81,7 +81,7 @@ sub callCometSearch {
 sub callPercolator {
         my $in = shift or die "$0 raw db"; # GM19127.rna
 
-        my @rawfiles = `ls result_v4/HSE/cometout/`;
+        my @rawfiles = `ls ./cometout/`;
 
         my %hash = ();
         my $n = 1;

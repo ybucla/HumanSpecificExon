@@ -8,7 +8,7 @@ def main():
 # suf function
 def percolatorResult():
 	cometout = 'result_v4/HSE/cometout/'
-	fdr = '0.01'
+	fdr = '0.05'
 	dirlist = os.listdir(cometout)
 	dirlist.remove('PJ_Log_out')
 	data = {}
