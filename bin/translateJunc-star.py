@@ -29,6 +29,13 @@ def main():
 	junctions = junctionFilter(junctions, args[0])
 	junctions.append(['final',''])
 	#print len(junctions)
+	sj_dict = {}
+	with open(args[1], 'r') as f:
+		for line in f:
+			line = line.rstrip()
+			ele = line.split()			
+			key = ele[0]+'_'+str(int(ele[1])-1)+'_'+str(int(ele[2])+1)+'_'+ele[3]
+			sj_dict[key] = line
 	last_chr=junctions[0][0]
 	chr_juncs=[]
 	with open(options.output_file, 'w') as out:
@@ -39,7 +46,7 @@ def main():
 				chr_juncs.append(junc[1:])
 				continue
 			else:
-				seqs = get_seqs(last_chr, chr_juncs, options.flank, options.genome_file)
+				seqs = get_seqs(last_chr, chr_juncs, options.flank, options.genome_file,sj_dict)
 				for i in range(len(chr_juncs)):
 					id, strand, junc_left, junc_right = chr_juncs[i]
 					seq = seqs[i]
@@ -140,12 +147,27 @@ def translate_dna(seq):
 	
 	return prot_seqs
 
-def get_seqs(chr, junctions, flank, file_dir):
+def get_seqs(chr, junctions, flank, file_dir,sj_dict):
 	seqs = []
 	genomic_seq = read_genome(file_dir, chr)
 	for id, strand, junc_left, junc_right in junctions:
-		left_seq = [genomic_seq[x] for x in range(junc_left[0] - flank - 1, junc_left[1])]
-		right_seq = [genomic_seq[x] for x in range(junc_right[0] - 1, junc_right[1] + flank)]
+		tag_strand = '1'
+		if strand == '-':
+			tag_strand = '2'
+		key = chr+'_'+str(junc_left[1])+'_'+str(junc_right[0])+'_'+tag_strand
+		ele = sj_dict[key].split()
+		left = flank + abs(junc_left[1] - junc_left[0]) + 1
+		right = flank + abs(junc_right[1] - junc_right[0]) + 1
+		if int(ele[11]) >0 and int(ele[11]) < left:			
+			left_seq = [genomic_seq[x] for x in range(junc_left[1] - int(ele[11]) - 1, junc_left[1])]
+			junc_left[0] = junc_left[1] - int(ele[11]) + 1
+		else:
+			left_seq = [genomic_seq[x] for x in range(junc_left[0] - flank - 1, junc_left[1])]
+		if int(ele[11]) >0 and int(ele[12]) < right:			
+			right_seq = [genomic_seq[x] for x in range(junc_right[0] - 1, junc_right[0] + int(ele[12]))]
+			junc_right[1] = junc_right[0] + int(ele[12]) - 1
+		else:
+			right_seq = [genomic_seq[x] for x in range(junc_right[0] - 1, junc_right[1] + flank)]
 		seq = [x.upper() for x in left_seq] + [right_seq[0].lower()] + [x.upper() for x in right_seq[1:]]
 		if strand == '-':
 			seq = rev_complement(seq)
