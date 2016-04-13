@@ -8,12 +8,13 @@ use File::Basename;
 use Data::Table;
 use 5.010;
 
-parse_SJ($ARGV[0]);
+#parse_SJ($ARGV[0]);
 #translateJuncStar($ARGV[0]);
 #removeIdenJunc($ARGV[0]);
 #callCometSearch($ARGV[0],$ARGV[1]);
 #callPercolator($ARGV[0]);
-#callJunctionReadsNumber($ARGV[0]);
+#callRiboJunctionReadsNumber($ARGV[0]);
+callannotation_translateJunc_star($ARGV[0]);
 
 sub parse_SJ {
         my $in = shift;
@@ -27,8 +28,8 @@ sub parse_SJ {
         }
 
         die $in,"\n" if !exists $hash{$in};
-        say "python /u/home/y/ybwang/scratch/HumanSpecificExon/bin/parse_SJ.py RNA/$hash{$in}/SJ.out.tab $hash{$in}.SJ.out.tab";
-	system("python /u/home/y/ybwang/scratch/HumanSpecificExon/bin/parse_SJ.py RNA/$hash{$in}/SJ.out.tab $hash{$in}.SJ.out.tab");
+        say "python /u/home/y/ybwang/scratch/HumanSpecificExon/bin/parse_SJ.py RNA/$hash{$in}/SJ.out.tab $hash{$in}.SJ";
+	system("python /u/home/y/ybwang/scratch/HumanSpecificExon/bin/parse_SJ.py RNA/$hash{$in}/SJ.out.tab $hash{$in}.SJ");
 }
 
 sub translateJuncStar {
@@ -43,8 +44,8 @@ sub translateJuncStar {
         }
 
         die $in,"\n" if !exists $hash{$in};
-	say "python /u/home/y/ybwang/scratch/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=6 RNA/$hash{$in}/";
-	system("python /u/home/y/ybwang/scratch/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=6 RNA/$hash{$in}/");
+	say "python /u/home/y/ybwang/scratch/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 RNA/$hash{$in}/ /u/home/y/ybwang/scratch/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ";
+	system("python /u/home/y/ybwang/scratch/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 RNA/$hash{$in}/ /u/home/y/ybwang/scratch/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ");
 }
 
 sub removeIdenJunc {
@@ -65,7 +66,7 @@ sub removeIdenJunc {
 	mkdir "massDb" if !-e "massDb";
 	#say "./removeIdenJunc.pl junctionPep/$hash{$in}";
 	#system("./removeIdenJunc.pl junctionPep/$hash{$in}");
-	say "cata /u/home/y/ybwang/scratch/HumanSpecificExon/data/db3/UP000005640_9606_additional_cdhit1.fasta junctionPep/$hash{$in} > massDb/merge_$hash{$in}";
+	say "cat /u/home/y/ybwang/scratch/HumanSpecificExon/data/db3/UP000005640_9606_additional_cdhit1.fasta junctionPep/$hash{$in} > massDb/merge_$hash{$in}";
 	system("cat /u/home/y/ybwang/scratch/HumanSpecificExon/data/db3/UP000005640_9606_additional_cdhit1.fasta junctionPep/$hash{$in} > massDb/merge_$hash{$in}");
 }
 
@@ -78,8 +79,8 @@ sub callCometSearch {
 	my $db = "/u/home/y/ybwang/scratch/HumanSpecificExon/massDb/merge_".basename($indb).".fa";
 	my $outdir = "/u/home/y/ybwang/scratch/HumanSpecificExon/cometout/".basename($indb);
 	mkdir $outdir if !-e $outdir;
-	#my $rawdir = "/u/home/y/ybwang/scratch/Yoav_Gilad_proteom/".basename($indb);
-	my $rawdir = "/u/home/y/ybwang/scratch/Mathias_Wilhelm/proteom";
+	my $rawdir = "/u/home/y/ybwang/scratch/Yoav_Gilad_proteom/".basename($indb);
+	#my $rawdir = "/u/home/y/ybwang/scratch/Mathias_Wilhelm/proteom";
 	$rawdir =~ s/\..*$//g;
 	my @rawfiles = `ls $rawdir/*.raw`;
 
@@ -113,7 +114,7 @@ sub callPercolator {
 }
 
 
-sub callJunctionReadsNumber {
+sub callRiboJunctionReadsNumber {
         my $in = shift or die "$0 raw db"; # GM19127.rna
 
         my @rawfiles = `ls result_v4/HSE/cometout/`;
@@ -133,6 +134,29 @@ sub callJunctionReadsNumber {
         system("python /u/home/y/ybwang/scratch/HumanSpecificExon/bin/junctionReadsNumber-star.py RNA/$hash{$in}.rna 6");
 	say "Ribo/$hash{$in}.ribo";
 	system("python /u/home/y/ybwang/scratch/HumanSpecificExon/bin/junctionReadsNumber-star.py Ribo/$hash{$in}.ribo 1");
+}
+
+sub callannotation_translateJunc_star {
+	my $in = shift or die "$0 raw db"; # GM19127.rna
+
+        my @rawfiles = `ls result_v5/HSE/cometout/`;
+
+        my %hash = ();
+	my %name = ();
+        my $n = 1;
+	foreach(@rawfiles){
+                chomp;
+                if($_ !~ /lymph|PJ_/){
+                        $hash{$n} = '/u/home/y/ybwang/scratch/HumanSpecificExon/RNA/'.$_.'/Aligned.out.sorted.bam';
+			$name{$n} = $_;
+                }else{
+			$hash{$n} = '~/scratch/Mathias_Wilhelm/rna/'.$_.'/star_out/Aligned.out.sorted.bam';
+			$name{$n} = $_;
+		}
+		$n++;
+        }
+	say "python /u/home/y/ybwang/scratch/HumanSpecificExon/bin/annotation_translateJunc-star.py result_v5/HSE.0.01.list $hash{$in} $name{$in}";
+	system("python /u/home/y/ybwang/scratch/HumanSpecificExon/bin/annotation_translateJunc-star.py result_v5/HSE.0.01.list $hash{$in} $name{$in}");
 }
 
 __DATA__

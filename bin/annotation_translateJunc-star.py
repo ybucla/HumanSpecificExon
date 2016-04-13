@@ -12,7 +12,7 @@ def main():
 	parser.add_option('-o', dest='output_file', default='putative_junc.fa', help='Output result filename [Default %default]')
 	parser.add_option('-l', dest='flank', type='int', default=66, help='Extend flanking junction ends by this number of bp [Default %default]')
 	parser.add_option('-g', dest='genome_file', default='/u/home/f/frankwoe/nobackup/hg19/hg19_by_chrom/', help='genomic fasta directory (by chromosomes) [Default %default]')
-	parser.add_option('--min-junc-reads', dest='min_junc_reads', default=6, type='int', help='Minimum number of reads required spanning the junction [Default %default]')
+	parser.add_option('--min-junc-reads', dest='min_junc_reads', default=2, type='int', help='Minimum number of reads required spanning the junction [Default %default]')
 	parser.add_option('--trim-RK', dest='trim_RK', default=False, action='store_true', help='Indicate whether trim both ends to first R or K [Default %default]')
 	parser.add_option('--verbose', dest='verbose', default=False, action='store_true', help='Verbose mode -- print DNA to stdin [Default %default]')
 	
@@ -34,17 +34,16 @@ def main():
 				tag = 1
 				head = line.replace('======','')
 			if tag == 1 and line.find('chr') == 0:
-				idsDict[head].append(line)
+				if head == args[2]:
+					idsDict[head].append(line)
 	for key in idsDict:
 		ids = defaultdict(list)
 		for line in idsDict[key]:
 			ele = line.split('_')
                         k = str(ele[0]) + '_' + str(ele[1]) + '_' + str(ele[2])
                         ids[k].append(line)
-		star_path = 'RNA/' + key + '/Aligned.out.sorted.bam'
-		if key.find('lymph') != -1:
-			star_path = '~/scratch/Mathias_Wilhelm/rna/' + key + '/star_out/Aligned.out.sorted.bam'
-		junctionReads(star_path, ids, key)
+	star_path = args[1] # 'RNA/' + key + '/Aligned.out.sorted.bam'
+	junctionReads(star_path, ids, key)
 	#ids = massresult(args[1])
 	#junction_reads = junctionReads(args[0] + '/Aligned.out.sorted.bam', ids)
 

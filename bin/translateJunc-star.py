@@ -159,15 +159,17 @@ def get_seqs(chr, junctions, flank, file_dir,sj_dict):
 		left = flank + abs(junc_left[1] - junc_left[0]) + 1
 		right = flank + abs(junc_right[1] - junc_right[0]) + 1
 		if int(ele[11]) >0 and int(ele[11]) < left:			
-			left_seq = [genomic_seq[x] for x in range(junc_left[1] - int(ele[11]) - 1, junc_left[1])]
-			junc_left[0] = junc_left[1] - int(ele[11]) + 1
+			left_seq = [genomic_seq[x] for x in range(junc_left[1] - int(ele[11]), junc_left[1])]
+			junc_left.insert(0, junc_left[1] - int(ele[11]) + 1)
 		else:
 			left_seq = [genomic_seq[x] for x in range(junc_left[0] - flank - 1, junc_left[1])]
-		if int(ele[11]) >0 and int(ele[12]) < right:			
-			right_seq = [genomic_seq[x] for x in range(junc_right[0] - 1, junc_right[0] + int(ele[12]))]
-			junc_right[1] = junc_right[0] + int(ele[12]) - 1
+			junc_left.insert(0, junc_left[1] - flank)
+		if int(ele[11]) >0 and int(ele[12]) < right:	
+			right_seq = [genomic_seq[x] for x in range(junc_right[0] - 1, junc_right[0] + int(ele[12]) - 1)]
+			junc_right.append(junc_right[0] + int(ele[12]) - 1)
 		else:
 			right_seq = [genomic_seq[x] for x in range(junc_right[0] - 1, junc_right[1] + flank)]
+			junc_right.append(junc_right[1] + flank)
 		seq = [x.upper() for x in left_seq] + [right_seq[0].lower()] + [x.upper() for x in right_seq[1:]]
 		if strand == '-':
 			seq = rev_complement(seq)
@@ -227,7 +229,7 @@ def read_junctions(file, reads, min_reads):  # [chr, id, strand, left_junction, 
 def junctionReads(sam_fn):  # bam file input
 # store reads id that mapped to human_epcific_exon to a dict
 	exonid = {}
-	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/scratch/HumanSpecificExon/data/human_specific_exon.2073.sorted.bed -b stdin -wa -wb -split -s -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/scratch/HumanSpecificExon/data/human_specific_exon.2073.sorted.bed -b stdin -wa -wb -s -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	for line in d.stdout.readlines():
 		line = line.rstrip()
 		ele = line.split()
