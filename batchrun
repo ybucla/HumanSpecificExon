@@ -1,0 +1,36 @@
+#! /u/home/y/ybwang/perl
+
+# get floss value for each region, against with coding region of known gene
+
+use strict;
+use warnings;
+use File::Basename;
+use Data::Table;
+use 5.010;
+
+my @list = glob "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/RNA/*.rna";
+
+open LOG, '>>log.out';
+my $n = 1;
+foreach(@list){
+	if( $n >=65 && $n<70){
+		(my $basename = basename($_)) =~ s/\.rna$//g;;
+		my $rawpath = "/u/home/y/ybwang/scratch/Yoav_Gilad_proteom/".$basename;
+		if(-e $rawpath){
+			my @rawlist = glob "$rawpath/*.raw";
+			my $submit = "submit_".$basename.".sh";
+			say $basename,"\t",scalar(@rawlist),"\t",$submit;
+			say LOG $n,"\t",$basename,"\t",scalar(@rawlist),"\t",$submit;
+			open OUT, ">$submit";
+			say OUT "#!/bin/bash";
+			say OUT "./bin/run \$SGE_TASK_ID $basename.rna";
+			close OUT;
+			system("chmod +x $submit");
+			my $m = scalar(@rawlist);
+			say "qsub -cwd -V -N PJ -l h_data=30G,h_rt=1:00:00 -t 1-$m:1 $submit";
+			system("qsub -cwd -V -N PJ -l h_data=30G,h_rt=1:00:00 -t 1-$m:1 $submit");
+		}
+	}
+	$n++;
+}
+close LOG;
