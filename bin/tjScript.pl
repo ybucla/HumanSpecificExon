@@ -32,7 +32,7 @@ sub tjRNAJunction {
 sub tjPercolaotr {
 	my $in = shift;
 
-	my $dir = 'result_v5/HSE/';
+	my $dir = 'result_v5/Alu/';
 	my $fdr = 0.01;
 	my $i = 0;
         my @rawfiles = `ls $dir/cometout/`;

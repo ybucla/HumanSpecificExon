@@ -279,18 +279,21 @@ def junctionFilter(junctionReads, out):
 	with open(tmpbed, 'w') as out:
 		for i in junctionReads:
 			id = i[0]+";"+i[1]+";"+i[2]+";"+str(i[3][0])+"_"+str(i[3][1])+"_"+str(i[4][0])+"_"+str(i[4][1])
-			line = i[0]+"\t"+str(i[3][0])+"\t"+str(i[4][1])+"\t"+id
-			out.write(line+"\t0\t"+i[2]+"\n")
-	p = subprocess.Popen('bedtools coverage -a ' + tmpbed + ' -b /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+			line_left = i[0]+"\t"+str( i[3][0] - 1 )+"\t"+str(i[3][1])+"\t"+id
+			line_right = i[0]+"\t"+str( i[4][0] - 1 )+"\t"+str(i[4][1])+"\t"+id
+			out.write(line_left+"\t0\t"+i[2]+"\n")
+			out.write(line_right+"\t0\t"+i[2]+"\n")
+	p = subprocess.Popen('bedtools coverage -a ' + tmpbed + ' -b /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/hg19_repeatMasker_Alu.bed', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	tmphash = defaultdict(list)
 	for line in p.stdout.readlines():
                 line = line.rstrip()
 		ele = line.split()
-		if ele[6] != '0':
-			arr = ele[3].split(';')
-			sites = arr[3].split('_')
-			junctionReads_filter.append([arr[0],arr[1],arr[2],[int(sites[0]),int(sites[1])],[int(sites[2]),int(sites[3])]])
-		#else:
-			#print line
+		if int(ele[6]) > 0:
+			if ele[3] not in tmphash:
+				arr = ele[3].split(';')
+				sites = arr[3].split('_')
+				junctionReads_filter.append([arr[0],arr[1],arr[2],[int(sites[0]),int(sites[1])],[int(sites[2]),int(sites[3])]])
+				tmphash[ele[3]] = ''
 	retval = p.wait()
 	os.remove(tmpbed)
 	return junctionReads_filter

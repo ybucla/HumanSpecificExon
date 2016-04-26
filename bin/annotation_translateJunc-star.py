@@ -79,7 +79,7 @@ def junctionReads(sam_fn, msids, title):  # bam file input
 # store reads id that mapped to human_epcific_exon to a dict
 	print '>',title
 	exonid = defaultdict(list)
-	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/scratch/HumanSpecificExon/data/human_specific_exon.2073.sorted.bed -b stdin -wa -wb -s -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/scratch/HumanSpecificExon/data/hg19_repeatMasker_Alu.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	for line in d.stdout.readlines():
 		line = line.rstrip()
 		ele = line.split()

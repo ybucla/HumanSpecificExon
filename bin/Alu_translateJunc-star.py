@@ -170,6 +170,7 @@ def get_seqs(chr, junctions, flank, file_dir,sj_dict):
 		else:
 			right_seq = [genomic_seq[x] for x in range(junc_right[0] - 1, junc_right[1] + flank)]
 			junc_right.append(junc_right[1] + flank)
+		#print str(junc_left[2])+"_"+str(junc_right[0]),"\t",str(junc_left[0])+"_"+str(junc_right[2]),"\t",len(left_seq),"\t",len(right_seq)
 		seq = [x.upper() for x in left_seq] + [right_seq[0].lower()] + [x.upper() for x in right_seq[1:]]
 		if strand == '-':
 			seq = rev_complement(seq)
@@ -229,7 +230,7 @@ def read_junctions(file, reads, min_reads):  # [chr, id, strand, left_junction, 
 def junctionReads(sam_fn):  # bam file input
 # store reads id that mapped to human_epcific_exon to a dict
 	exonid = {}
-	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/scratch/HumanSpecificExon/data/hg19_repeatMasker_Alu.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	for line in d.stdout.readlines():
 		line = line.rstrip()
 		ele = line.split()
@@ -281,7 +282,7 @@ def junctionFilter(junctionReads, out):
 			id = i[0]+";"+i[1]+";"+i[2]+";"+str(i[3][0])+"_"+str(i[3][1])+"_"+str(i[4][0])+"_"+str(i[4][1])
 			line = i[0]+"\t"+str(i[3][0])+"\t"+str(i[4][1])+"\t"+id
 			out.write(line+"\t0\t"+i[2]+"\n")
-	p = subprocess.Popen('bedtools coverage -a ' + tmpbed + ' -b /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	p = subprocess.Popen('bedtools coverage -a ' + tmpbed + ' -b /u/home/y/ybwang/scratch/HumanSpecificExon/data/hg19_repeatMasker_Alu.sorted.bed', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	for line in p.stdout.readlines():
                 line = line.rstrip()
 		ele = line.split()
