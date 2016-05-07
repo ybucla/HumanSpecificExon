@@ -9,9 +9,8 @@ use Data::Table;
 use List::Util qw( min max);
 use 5.010;
 
-my @args = @ARGV or die "$0 junctionpep_path percolator_path"; # result_v5/Alu/junctionPep/GM18486.rna.fa result_v5/Alu/cometout/GM18486.rna/0.05
-
-die "No such file found!\n" if scalar(@args) < 1;
+my @args = @ARGV or die usage(); # result_v5/Alu/junctionPep/GM18486.rna.fa result_v5/Alu/cometout/GM18486.rna/0.05
+die usage() if scalar(@args) < 2;
 
 my $bed = "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5_CDS.unique.sorted.bed";
 
@@ -102,4 +101,9 @@ foreach(keys %pephash){
 	}	
 }
 
-
+sub usage {
+my $usage = "USAGE: ".basename($0)." junctionpep_path percolator_path
+Example:
+".basename($0)." result_v5/Alu/junctionPep/GM19207.rna.fa ~/comet/GM19207_tsv/0.05/\n";
+return $usage;
+}

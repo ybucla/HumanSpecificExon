@@ -43,5 +43,5 @@ sub tjPercolaotr {
 		(my $percolator = $dir."/cometout/$_/$fdr") =~ s/\/$//g;
 		system("/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator.pl $junction $percolator");
         }
-	#system("rm -rf tmp");
+	system("rm -rf tmp");
 }
