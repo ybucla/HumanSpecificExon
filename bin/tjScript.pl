@@ -32,36 +32,16 @@ sub tjRNAJunction {
 sub tjPercolaotr {
 	my $in = shift;
 
-	my $dir = 'result_v5/Alu/';
-	my $fdr = 0.01;
+	my $dir = 'result_v5/Alu';
+	my $fdr = 0.05;
 	my $i = 0;
         my @rawfiles = `ls $dir/cometout/`;
         foreach(@rawfiles){
                 chomp;
 		next if /PJ_/;
-		$i += 1;
-		next if defined($in) &&  $i != $in;
-		
-	        my $percolatorfile = $dir.'/cometout/'.$_.'/'.$fdr.'/*.'.$fdr.'.pep.percolator';
-
-        	my $reg = 'chr';
-		#my $identityfile = $dir.'/massDb/identity/identify_'.$_.'.fa';
-	        #my @identityhead = `cut -f 2 $identityfile | sort | uniq`;
-        	#foreach(@identityhead){
-	        #        chomp;
-                #	$reg = $reg.'|'.$_;
-        	#}
-
-        	my @n1 = `awk -F '\\t' '\$3 < $fdr' $percolatorfile | cut -f 6 | sort | uniq`;
-	        my @n2 = `awk -F '\\t' '\$3 < $fdr' $percolatorfile | awk -F '\\t' '\$6 ~ /$reg/' | cut -f 6 | sort | uniq`;
-        	my @m1 = `awk -F '\\t' '\$3 < $fdr' $percolatorfile | sort | uniq`;
-	        my @m2 = `awk -F '\\t' '\$3 < $fdr' $percolatorfile | awk -F '\\t' '\$6 ~ /$reg/' | sort | uniq`;
-	        print "======", $_, "\n";
-	        print "Protein number:\t", scalar(@n1), "\n";
-        	#print "Junction number:\t", $n2[0];
-	        #print "Pep number:\t", $m1[0];
-        	print "Junction Pep number:\t", scalar(@n2),"\n";
-		
-		print $_ for @n2;
+		my $junction = $dir."/junctionPep/$_.fa";
+		(my $percolator = $dir."/cometout/$_/$fdr") =~ s/\/$//g;
+		system("/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator.pl $junction $percolator");
         }
+	#system("rm -rf tmp");
 }

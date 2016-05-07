@@ -6,6 +6,7 @@ use Data::Table;
 use 5.010;
 
 my $in = 'result_v5/Alu.0.05.list';
+my $fasta = "result_v5/Alu/junctionPep/*.fa";
 
 # read fasta file
 my $seq = readSeq();
@@ -19,16 +20,18 @@ while(<IN>){
 	if(/======/){
 		($head = $_) =~ s/======|\.rna//g;
 	}
-	next if !/chr/;
-	my @arr = split /,|_/;
-	my $id = join "_", @arr[0,1,2,4];
-	$junction{$id}{$_."_".$head} = $seq->{$_."_".$head};
+	next if /^#|===/;
+	my ($tag, $j) = (split /\t/)[4,5];
+	next if $tag eq 'N';
+	my @arr = split /,|_/,$j;
+	my $id = join "_", @arr[0,1,2,4];	
+	$junction{$id}{$j."_".$head} = $seq->{$j."_".$head};
 }
 close IN;
 
 mkdir 'tmp' if !-e 'tmp';
 foreach my $k1(keys %junction){
-	next if scalar(keys %{$junction{$k1}}) < 2; # output junction above 2
+	#next if scalar(keys %{$junction{$k1}}) < 2; # output junction above 2
 	open OUT, ">tmp/".$k1;
 	foreach my $k2(keys %{$junction{$k1}}){
 		say OUT ">",$k2,"\n",$junction{$k1}{$k2};
@@ -40,7 +43,7 @@ foreach my $k1(keys %junction){
 
 # --sub--
 sub readSeq {
-	my @list = glob "result_v5/Alu/junctionPep/*.fa";
+	my @list = glob $fasta;
 	my %seq = ();
 	foreach(@list){
 		(my $basename = basename($_)) =~ s/\..*$//g;
@@ -63,6 +66,6 @@ sub cdhit {
 	my $in = shift;
 	my $out = $in.'.cdhit';
 	my $bin = '/u/home/y/ybwang/nobackup-yxing/program/cd-hit-v4.6.5-2016-0304/cd-hit';
-	say "$bin -i $in -d 0 -o $out -c 0.9 -n 5 -G 1 -g 1 -b 20 -s 0.0 -aL 0.0 -aS 0.0";
-	system("$bin -i $in -d 0 -o $out -c 0.9 -n 5 -G 1 -g 1 -b 20 -s 0.0 -aL 0.0 -aS 0.0");	
+	say "$bin -i $in -d 0 -o $out -c 0.8 -n 5 -G 1 -g 1 -b 20 -s 0.0 -aL 0.0 -aS 0.0";
+	system("$bin -i $in -d 0 -o $out -c 0.8 -n 5 -G 1 -g 1 -b 20 -s 0.0 -aL 0.0 -aS 0.0");	
 }

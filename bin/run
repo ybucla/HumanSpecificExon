@@ -9,10 +9,10 @@ use Data::Table;
 use 5.010;
 
 #parse_SJ($ARGV[0]);
-translateJuncStar($ARGV[0]);
+#translateJuncStar($ARGV[0]);
 #removeIdenJunc($ARGV[0]);
 #callCometSearch($ARGV[0],$ARGV[1]);
-#callPercolator($ARGV[0]);
+callPercolator($ARGV[0]);
 #callRiboJunctionReadsNumber($ARGV[0]);
 #callannotation_translateJunc_star($ARGV[0]);
 
@@ -44,8 +44,8 @@ sub translateJuncStar {
         }
 
         die $in,"\n" if !exists $hash{$in};
-	say "python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/newtranslateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 RNA/$hash{$in}/ /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ";
-	system("python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/newtranslateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 RNA/$hash{$in}/ /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ");
+	say "python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 RNA/$hash{$in}/ /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ";
+	system("python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 RNA/$hash{$in}/ /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ");
 }
 
 sub removeIdenJunc {
@@ -98,8 +98,9 @@ sub callCometSearch {
 
 sub callPercolator {
         my $in = shift or die "$0 raw db"; # GM19127.rna
-
-        my @rawfiles = `ls ./cometout/`;
+	
+	my $dir = 'result_v5/HSE/cometout';
+        my @rawfiles = `ls $dir`;
 
         my %hash = ();
         my $n = 1;
@@ -109,15 +110,15 @@ sub callPercolator {
                 $n++;
         }
 
-        say "/u/home/y/ybwang/comet/callPercolator.pl -f '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/cometout/$hash{$in}/*.pin'";
-        system("/u/home/y/ybwang/comet/callPercolator.pl -f '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/cometout/$hash{$in}/*.pin'");
+        say "/u/home/y/ybwang/comet/callPercolator.pl -f '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/$dir/$hash{$in}/*.pin'";
+        system("/u/home/y/ybwang/comet/callPercolator.pl -f '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/$dir/$hash{$in}/*.pin'");
 }
 
 
 sub callRiboJunctionReadsNumber {
         my $in = shift or die "$0 raw db"; # GM19127.rna
 
-        my @rawfiles = `ls result_v5/Alu/cometout/`;
+        my @rawfiles = `ls result_v5/HSE/cometout/`;
 
         my %hash = ();
         my $n = 1;
@@ -139,7 +140,7 @@ sub callRiboJunctionReadsNumber {
 sub callannotation_translateJunc_star {
 	my $in = shift or die "$0 raw db"; # GM19127.rna
 
-        my @rawfiles = `ls result_v5/Alu/cometout/`;
+        my @rawfiles = `ls result_v5/HSE/cometout/`;
 
         my %hash = ();
 	my %name = ();
@@ -155,8 +156,8 @@ sub callannotation_translateJunc_star {
 		}
 		$n++;
         }
-	say "python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/annotation_translateJunc-star.py result_v5/Alu.0.01.list $hash{$in} $name{$in}";
-	system("python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/annotation_translateJunc-star.py result_v5/Alu.0.01.list $hash{$in} $name{$in}");
+	say "python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/annotation_translateJunc-star.py result_v5/Alu.0.05.list $hash{$in} $name{$in}";
+	system("python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/annotation_translateJunc-star.py result_v5/Alu.0.05.list $hash{$in} $name{$in}");
 }
 
 __DATA__

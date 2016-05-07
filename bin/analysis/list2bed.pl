@@ -5,7 +5,7 @@ use File::Basename;
 use Data::Table;
 use 5.010;
 
-my $in = '1.region'; #'result_v5/Alu.0.05.list';
+my $in = 'result_v5/Alu.0.05.list'; #'result_v5/Alu.0.05.list';
 
 my $head = '';
 open IN, $in;

@@ -205,7 +205,7 @@ def read_junctions(file, reads, min_reads):  # [chr, id, strand, left_junction, 
 def junctionReads(sam_fn):  # bam file input
 # store reads id that mapped to human_epcific_exon to a dict
 	exonid = {}
-	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/scratch/HumanSpecificExon/data/hg19_repeatMasker_Alu.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/human_specific_exon.2073.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	for line in d.stdout.readlines():
 		line = line.rstrip()
 		ele = line.split()
