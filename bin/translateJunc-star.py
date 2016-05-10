@@ -13,7 +13,7 @@ def main():
 	parser.add_option('-o', dest='output_file', default='putative_junc.fa', help='Output result filename [Default %default]')
 	parser.add_option('-l', dest='flank', type='int', default=66, help='Extend flanking junction ends by this number of bp [Default %default]')
 	parser.add_option('-g', dest='genome_file', default='/u/home/f/frankwoe/nobackup/hg19/hg19_by_chrom/', help='genomic fasta directory (by chromosomes) [Default %default]')
-	parser.add_option('--min-junc-reads', dest='min_junc_reads', default=6, type='int', help='Minimum number of reads required spanning the junction [Default %default]')
+	parser.add_option('--min-junc-reads', dest='min_junc_reads', default=2, type='int', help='Minimum number of reads required spanning the junction [Default %default]')
 	parser.add_option('--trim-RK', dest='trim_RK', default=False, action='store_true', help='Indicate whether trim both ends to first R or K [Default %default]')
 	parser.add_option('--verbose', dest='verbose', default=False, action='store_true', help='Verbose mode -- print DNA to stdin [Default %default]')
 	
@@ -229,7 +229,7 @@ def read_junctions(file, reads, min_reads):  # [chr, id, strand, left_junction, 
 def junctionReads(sam_fn):  # bam file input
 # store reads id that mapped to human_epcific_exon to a dict
 	exonid = {}
-	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/human_specific_exon.2073.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5_CDS.unique.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	for line in d.stdout.readlines():
 		line = line.rstrip()
 		ele = line.split()
@@ -283,7 +283,7 @@ def junctionFilter(junctionReads, out):
 			line_right = i[0]+"\t"+str( i[4][0] - 1 )+"\t"+str(i[4][1])+"\t"+id
 			out.write(line_left+"\t0\t"+i[2]+"\n")
 			out.write(line_right+"\t0\t"+i[2]+"\n")
-	p = subprocess.Popen('bedtools coverage -a ' + tmpbed + ' -b /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/human_specific_exon.2073.sorted.bed -s', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	p = subprocess.Popen('bedtools coverage -a ' + tmpbed + ' -b /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5_CDS.unique.sorted.bed -s', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	tmphash = defaultdict(list)
 	for line in p.stdout.readlines():
                 line = line.rstrip()

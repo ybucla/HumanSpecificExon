@@ -12,13 +12,14 @@ use 5.010;
 my @args = @ARGV or die usage(); # result_v5/Alu/junctionPep/GM18486.rna.fa result_v5/Alu/cometout/GM18486.rna/0.05
 die usage() if scalar(@args) < 2;
 
-my $bed = "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5_CDS.unique.sorted.bed";
+my $bed = $args[2]; # "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5_CDS.unique.sorted.bed";
 
 (my $sample = basename($args[0])) =~ s/\.fa//g;;
 my $fdr = basename($args[1]);
 
 say "======$sample";
 say "# obtain percolator result from '$sample' with fdr '$fdr'";
+say "# bedfile: $bed";
 my @peparr = `awk -F '\t' '\$3 < $fdr' $args[1]/*.pep.percolator | cut -f 5`;
 my %pephash;
 foreach(0..$#peparr){
@@ -102,8 +103,8 @@ foreach(keys %pephash){
 }
 
 sub usage {
-my $usage = "USAGE: ".basename($0)." junctionpep_path percolator_path
+my $usage = "USAGE: ".basename($0)." junctionpep_path percolator_path bedfile_path
 Example:
-".basename($0)." result_v5/Alu/junctionPep/GM19207.rna.fa ~/comet/GM19207_tsv/0.05/\n";
+".basename($0)." result_v5/Alu/junctionPep/GM19207.rna.fa ~/comet/GM19207_tsv/0.05/ data/Ensembl_Alu_25bp_0.5_CDS.unique.sorted.bed\n";
 return $usage;
 }

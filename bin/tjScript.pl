@@ -32,8 +32,10 @@ sub tjRNAJunction {
 sub tjPercolaotr {
 	my $in = shift;
 
-	my $dir = 'result_v5/Alu';
+	my $dir = 'result_v5/lymph/Alu';
 	my $fdr = 0.05;
+	my $bedfile = '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5_CDS.unique.sorted.bed';
+
 	my $i = 0;
         my @rawfiles = `ls $dir/cometout/`;
         foreach(@rawfiles){
@@ -41,7 +43,8 @@ sub tjPercolaotr {
 		next if /PJ_/;
 		my $junction = $dir."/junctionPep/$_.fa";
 		(my $percolator = $dir."/cometout/$_/$fdr") =~ s/\/$//g;
-		system("/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator.pl $junction $percolator");
+		#say "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator.pl $junction $percolator $bedfile";
+		system("/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator.pl $junction $percolator $bedfile");
         }
 	system("rm -rf tmp");
 }

@@ -44,8 +44,8 @@ sub translateJuncStar {
         }
 
         die $in,"\n" if !exists $hash{$in};
-	say "python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 RNA/$hash{$in}/ /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ";
-	system("python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 RNA/$hash{$in}/ /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ");
+	say "python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 ~/scratch/Mathias_Wilhelm/RNA/lymph/$hash{$in}/ /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ";
+	system("python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 ~/scratch/Mathias_Wilhelm/RNA/lymph/$hash{$in}/ /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ");
 }
 
 sub removeIdenJunc {
@@ -79,8 +79,8 @@ sub callCometSearch {
 	my $db = "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/massDb/merge_".basename($indb).".fa";
 	my $outdir = "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/cometout/".basename($indb);
 	mkdir $outdir if !-e $outdir;
-	my $rawdir = "/u/home/y/ybwang/scratch/Yoav_Gilad_proteom/".basename($indb);
-	#my $rawdir = "/u/home/y/ybwang/scratch/Mathias_Wilhelm/proteom";
+	#my $rawdir = "/u/home/y/ybwang/scratch/Yoav_Gilad_proteom/".basename($indb);
+	my $rawdir = "/u/home/y/ybwang/scratch/Mathias_Wilhelm/PROTEOMICS/lymph";
 	$rawdir =~ s/\..*$//g;
 	my @rawfiles = `ls $rawdir/*.raw`;
 
@@ -99,7 +99,7 @@ sub callCometSearch {
 sub callPercolator {
         my $in = shift or die "$0 raw db"; # GM19127.rna
 	
-	my $dir = 'result_v5/HSE/cometout';
+	my $dir = './cometout';
         my @rawfiles = `ls $dir`;
 
         my %hash = ();
@@ -161,6 +161,11 @@ sub callannotation_translateJunc_star {
 }
 
 __DATA__
+lymph_v157
+lymph_v164
+lymph_v190
+lymph_v192
+lymph_v193
 GM18486.rna
 GM18498.rna
 GM18499.rna
