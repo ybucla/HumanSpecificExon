@@ -102,6 +102,8 @@ foreach(keys %pephash){
 	}	
 }
 
+system("rm -rf tmp/");
+
 sub usage {
 my $usage = "USAGE: ".basename($0)." junctionpep_path percolator_path bedfile_path
 Example:

@@ -9,10 +9,10 @@ use Data::Table;
 use 5.010;
 
 #parse_SJ($ARGV[0]);
-#translateJuncStar($ARGV[0]);
+translateJuncStar($ARGV[0]);
 #removeIdenJunc($ARGV[0]);
 #callCometSearch($ARGV[0],$ARGV[1]);
-callPercolator($ARGV[0]);
+#callPercolator($ARGV[0]);
 #callRiboJunctionReadsNumber($ARGV[0]);
 #callannotation_translateJunc_star($ARGV[0]);
 
@@ -35,6 +35,7 @@ sub parse_SJ {
 sub translateJuncStar {
 	my $in = shift;
 
+	my $tissue = 'RNA';
         my %hash = ();
         my $n = 1;
         while(<DATA>){
@@ -42,10 +43,16 @@ sub translateJuncStar {
                 $hash{$n} = $_;
                 $n++;
         }
-
+	# add tempory
+	my @arr = split/_/, $hash{$in};
+	pop(@arr);
+	#$tissue = '~/scratch/Mathias_Wilhelm/RNA/'.(join "_", @arr);
+	# add end
+	
+                                                               
         die $in,"\n" if !exists $hash{$in};
-	say "python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 ~/scratch/Mathias_Wilhelm/RNA/lymph/$hash{$in}/ /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ";
-	system("python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 ~/scratch/Mathias_Wilhelm/RNA/lymph/$hash{$in}/ /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ");
+	say "python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 $tissue/$hash{$in}/ /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ";
+	system("python /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/translateJunc-star.py -o $hash{$in}.fa -l 66 --min-junc-reads=2 $tissue/$hash{$in}/ /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/$hash{$in}.SJ");
 }
 
 sub removeIdenJunc {
@@ -80,7 +87,7 @@ sub callCometSearch {
 	my $outdir = "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/cometout/".basename($indb);
 	mkdir $outdir if !-e $outdir;
 	#my $rawdir = "/u/home/y/ybwang/scratch/Yoav_Gilad_proteom/".basename($indb);
-	my $rawdir = "/u/home/y/ybwang/scratch/Mathias_Wilhelm/PROTEOMICS/lymph";
+	my $rawdir = "/u/home/y/ybwang/scratch/Mathias_Wilhelm/PROTEOMICS/".basename($indb);
 	$rawdir =~ s/\..*$//g;
 	my @rawfiles = `ls $rawdir/*.raw`;
 
@@ -106,6 +113,7 @@ sub callPercolator {
         my $n = 1;
         foreach(@rawfiles){
                 chomp;
+		next if /PJ_log_out/;
                 $hash{$n} = $_;
                 $n++;
         }
@@ -161,11 +169,25 @@ sub callannotation_translateJunc_star {
 }
 
 __DATA__
+adrenal_gland_V119
+adrenal_gland_V121
+adrenal_gland_V122
+liver_V108
+liver_V110
+liver_V111
+cerebral_cortex_V102
+cerebral_cortex_V103
+cerebral_cortex_V29
 lymph_v157
 lymph_v164
 lymph_v190
 lymph_v192
 lymph_v193
+colon_V10
+colon_V11
+colon_V14
+colon_V15
+colon_V22
 GM18486.rna
 GM18498.rna
 GM18499.rna
