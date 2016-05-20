@@ -5,8 +5,8 @@ use File::Basename;
 use Data::Table;
 use 5.010;
 
-my $in = 'result_v5/TISSUE/Alu/lymph.0.05.list';
-my $fasta = "result_v5/TISSUE/Alu/junctionPep/lymph.fa";
+my $in = 'result_v5/LCLs/Alu_all.0.05_0.01.list';
+my $fasta = "result_v5/LCLs/Alu_all/junctionPep/*.fa";
 
 # read fasta file
 my $seq = readSeq();

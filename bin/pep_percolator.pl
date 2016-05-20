@@ -7,6 +7,7 @@ use warnings;
 use File::Basename;
 use Data::Table;
 use List::Util qw( min max);
+use List::MoreUtils qw(uniq);
 use 5.010;
 
 my @args = @ARGV or die usage(); # result_v5/Alu/junctionPep/GM18486.rna.fa result_v5/Alu/cometout/GM18486.rna/0.05
@@ -20,11 +21,12 @@ my $fdr = basename($args[1]);
 say "======$sample";
 say "# obtain percolator result from '$sample' with fdr '$fdr'";
 say "# bedfile: $bed";
-my @peparr = `awk -F '\t' '\$3 < $fdr' $args[1]/*.pep.percolator | cut -f 5`;
+my @peparr = `awk -F '\t' '\$3 < $fdr' $args[1]/*.pep.percolator | cut -f 4,5`;
 my %pephash;
 foreach(0..$#peparr){
-	(my $p = $peparr[$_]) =~ s/\R|\.|\*|-//g;
-	$pephash{$p} = '';
+	my @line = split /\t/, $peparr[$_];	
+	(my $p = $line[1]) =~ s/\R|\.|\*|-//g;
+	$pephash{$p} = $line[0];
 }
 
 say "# read junction pep and write to bed";
@@ -84,6 +86,8 @@ foreach(@r){
 
 say "# get peptide under fdr";
 say "# peptide\tstart\tend\tsplice\ttag\tid\tseq";
+my %chrPepHash = ();
+my %info = ();
 foreach(keys %pephash){
 	foreach my $i(keys %seq){
 		my $index = index(uc($seq{$i}),uc($_));
@@ -97,10 +101,20 @@ foreach(keys %pephash){
 				my $max = max($s, $e, $start, $end);
 				$tag = 'Y' if ($end - $start + 1 + $e - $s + 1) > ($max - $min + 2);
 			}
-			say $_,"\t",$start,"\t",$end,"\t",$k,"\t",$tag,"\t",$i,"\t",$seq{$i};
+			#say $_,"\t",$start,"\t",$end,"\t",$k,"\t",$tag,"\t",$i,"\t",$seq{$i};
+			$chrPepHash{$_} = $pephash{$_};
+			$info{$_} = $_."\t".$start."\t".$end."\t".$k."\t".$tag."\t".$i."\t".$seq{$i};
 		}
-	}	
+	}
 }
+
+my $localResult = localFDR(\%chrPepHash);
+my @arr = split /\R/, $localResult;
+foreach(@arr){
+	my @ele = split /\t/;
+	say $info{$ele[0]},"\t",$chrPepHash{$ele[0]};
+}
+
 
 system("rm -rf tmp/");
 
@@ -109,4 +123,27 @@ my $usage = "USAGE: ".basename($0)." junctionpep_path percolator_path bedfile_pa
 Example:
 ".basename($0)." result_v5/Alu/junctionPep/GM19207.rna.fa ~/comet/GM19207_tsv/0.05/ data/Ensembl_Alu_25bp_0.5_CDS.unique.sorted.bed\n";
 return $usage;
+}
+
+sub localFDR {
+	my $chrPepHash = shift;
+	my @uniq = sort {$a<=>$b} uniq(values %{$chrPepHash});
+	my $result = '';
+	my $FDR = 0.01;
+	foreach my $s (@uniq){
+		my $sum = 0;
+		my $content = '';
+		my $total = scalar(keys %{$chrPepHash});
+		foreach my $l (keys %{$chrPepHash}){
+			my $pep = $chrPepHash->{$l};
+			if($pep < $s){
+	                        $sum += $pep;
+                        	$content .= $l."\t".$pep."\n";
+                	}
+		}
+		my $fdr = $sum / $total;
+		last if $fdr > $FDR;
+		$result = $content;
+	}
+	return $result;
 }

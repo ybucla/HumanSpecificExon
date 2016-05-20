@@ -158,15 +158,15 @@ def get_seqs(chr, junctions, flank, file_dir,sj_dict):
 		ele = sj_dict[key].split()
 		left = flank + abs(junc_left[1] - junc_left[0]) + 1
 		right = flank + abs(junc_right[1] - junc_right[0]) + 1
-		if int(ele[11]) >0 and int(ele[11]) < left:			
-			left_seq = [genomic_seq[x] for x in range(junc_left[1] - int(ele[11]), junc_left[1])]
-			junc_left.insert(0, junc_left[1] - int(ele[11]) + 1)
+		if int(ele[11]) >0 and int(ele[11])-1 < left:			
+			left_seq = [genomic_seq[x] for x in range(junc_left[1] - int(ele[11]) +1, junc_left[1])]
+			junc_left.insert(0, junc_left[1] - int(ele[11]) + 1 + 1)
 		else:
 			left_seq = [genomic_seq[x] for x in range(junc_left[0] - flank - 1, junc_left[1])]
-			junc_left.insert(0, junc_left[1] - flank)
-		if int(ele[12]) >0 and int(ele[12]) < right:	
-			right_seq = [genomic_seq[x] for x in range(junc_right[0] - 1, junc_right[0] + int(ele[12]) - 1)]
-			junc_right.append(junc_right[0] + int(ele[12]) - 1)
+			junc_left.insert(0, junc_left[0] - flank)
+		if int(ele[12]) >0 and int(ele[12])-1 < right:	
+			right_seq = [genomic_seq[x] for x in range(junc_right[0] - 1, junc_right[0] + int(ele[12]) - 1 - 1)]
+			junc_right.append(junc_right[0] + int(ele[12]) - 1 - 1)
 		else:
 			right_seq = [genomic_seq[x] for x in range(junc_right[0] - 1, junc_right[1] + flank)]
 			junc_right.append(junc_right[1] + flank)
