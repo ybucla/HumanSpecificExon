@@ -58,10 +58,11 @@ def main():
 					for j in range(len(prot_seqs)):
 						prot_seq = prot_seqs[j]
 						tr_prot_seq = trim_prot(prot_seq, options.trim_RK)
+						left_trim = prot_seq.find(tr_prot_seq)
 						if len(tr_prot_seq) < 5 or tr_prot_seq.upper() == tr_prot_seq:
 							np = np + 1
 							continue
-						out.write(id_line + '_ORF:' + str(j) + '\n' + tr_prot_seq + '\n')
+						out.write(id_line + '_startTrim:'+str(left_trim)+'_ORF:' + str(j) + '\n' + tr_prot_seq + '\n')
 				chr_juncs = [junc[1:]]
 				last_chr = chr
 		print "# stop and 5 aa less pep:\t"+str(np)
@@ -158,18 +159,19 @@ def get_seqs(chr, junctions, flank, file_dir,sj_dict):
 		ele = sj_dict[key].split()
 		left = flank + abs(junc_left[1] - junc_left[0]) + 1
 		right = flank + abs(junc_right[1] - junc_right[0]) + 1
-		if int(ele[11]) >0 and int(ele[11])-1 < left:			
+		if int(ele[11]) > 1 and int(ele[11])-1 < left:			
 			left_seq = [genomic_seq[x] for x in range(junc_left[1] - int(ele[11]) +1, junc_left[1])]
 			junc_left.insert(0, junc_left[1] - int(ele[11]) + 1 + 1)
 		else:
 			left_seq = [genomic_seq[x] for x in range(junc_left[0] - flank - 1, junc_left[1])]
 			junc_left.insert(0, junc_left[0] - flank)
-		if int(ele[12]) >0 and int(ele[12])-1 < right:	
+		if int(ele[12]) > 1 and int(ele[12])-1 < right:	
 			right_seq = [genomic_seq[x] for x in range(junc_right[0] - 1, junc_right[0] + int(ele[12]) - 1 - 1)]
 			junc_right.append(junc_right[0] + int(ele[12]) - 1 - 1)
 		else:
 			right_seq = [genomic_seq[x] for x in range(junc_right[0] - 1, junc_right[1] + flank)]
 			junc_right.append(junc_right[1] + flank)
+		#print id,"\t",junc_left,"\t",junc_right
 		seq = [x.upper() for x in left_seq] + [right_seq[0].lower()] + [x.upper() for x in right_seq[1:]]
 		if strand == '-':
 			seq = rev_complement(seq)
@@ -229,7 +231,7 @@ def read_junctions(file, reads, min_reads):  # [chr, id, strand, left_junction, 
 def junctionReads(sam_fn):  # bam file input
 # store reads id that mapped to human_epcific_exon to a dict
 	exonid = {}
-	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/hk.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	for line in d.stdout.readlines():
 		line = line.rstrip()
 		ele = line.split()
@@ -283,7 +285,7 @@ def junctionFilter(junctionReads, out):
 			line_right = i[0]+"\t"+str( i[4][0] - 1 )+"\t"+str(i[4][1])+"\t"+id
 			out.write(line_left+"\t0\t"+i[2]+"\n")
 			out.write(line_right+"\t0\t"+i[2]+"\n")
-	p = subprocess.Popen('bedtools coverage -a ' + tmpbed + ' -b /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed -s', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	p = subprocess.Popen('bedtools coverage -a ' + tmpbed + ' -b /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/hk.sorted.bed -s', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	tmphash = defaultdict(list)
 	for line in p.stdout.readlines():
                 line = line.rstrip()

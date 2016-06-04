@@ -78,6 +78,7 @@ foreach(@r){
                 }
 	}
 }
+
 #foreach my $k1(keys %exonloc){
 #	foreach my $k2(keys %{$exonloc{$k1}}){
 #		say $k1, "\t", $k2, "\t", $exonloc{$k1}{$k2};
@@ -103,20 +104,26 @@ foreach(keys %pephash){
 			}
 			#say $_,"\t",$start,"\t",$end,"\t",$k,"\t",$tag,"\t",$i,"\t",$seq{$i};
 			$chrPepHash{$_} = $pephash{$_};
-			$info{$_} = $_."\t".$start."\t".$end."\t".$k."\t".$tag."\t".$i."\t".$seq{$i};
+			push @{$info{$_}}, $_."\t".$start."\t".$end."\t".$k."\t".$tag."\t".$i."\t".$seq{$i};
 		}
 	}
+}
+
+foreach my $peptide(keys %info){
+	my @k = @{$info{$peptide}};
+	#say $_,"\t",$chrPepHash{$peptide} for @k;
 }
 
 my $localResult = localFDR(\%chrPepHash);
 my @arr = split /\R/, $localResult;
 foreach(@arr){
 	my @ele = split /\t/;
-	say $info{$ele[0]},"\t",$chrPepHash{$ele[0]};
+	my @k = @{$info{$ele[0]}};
+	say $_,"\t",$chrPepHash{$ele[0]} for @k;
 }
 
 
-system("rm -rf tmp/");
+#system("rm -rf tmp/");
 
 sub usage {
 my $usage = "USAGE: ".basename($0)." junctionpep_path percolator_path bedfile_path

@@ -33,9 +33,9 @@ sub tjRNAJunction {
 sub tjPercolaotr {
 	#my $in = shift;
 
-	my $dir = './';
+	(my $dir = 'result_v5/LCLs/HKgene/') =~ s/\/$//g;;
 	my $fdr = 0.05;
-	my $bedfile = '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed';
+	my $bedfile = '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/hk.sorted.bed';
 
 	my $i = 0;
         my @rawfiles = `ls $dir/cometout/`;
@@ -54,13 +54,14 @@ sub tjPercolaotr_TISSUE {
         my $in = shift; # lymph
 	die "USAGE:\t$0 tissuename(i.e. liver)\n" if !defined($in);
 
-        my $dir = 'result_v5/TISSUE/Alu_all/cometout/'.$in;
+        my $dir = 'result_v5/TISSUE/Alu/cometout/'.$in;
         my $fdr = 0.05;
-        my $bedfile = '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed';
+        my $bedfile = '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5_CDS_overlap.unique.sorted.bed';
 	(my $junction = $dir) =~ s/cometout/junctionPep/;
 	$junction .= '.fa';
 	my $percolator = $dir.'/'.$fdr;
 	
 	#say "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator.pl $junction $percolator $bedfile";
 	system("/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator.pl $junction $percolator $bedfile");
+	#system("rm -rf tmp");
 }

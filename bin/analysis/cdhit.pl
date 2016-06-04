@@ -5,9 +5,10 @@ use File::Basename;
 use Data::Table;
 use 5.010;
 
-my $in = 'result_v5/LCLs/Alu_all.0.05_0.01.list';
-my $fasta = "result_v5/LCLs/Alu_all/junctionPep/*.fa";
+my $in = shift or die "ERROR: $0 lymph.0.05.list fasta\nPlease input '0.05.list file'\n"; #'result_v5/TISSUE/HSE/nolocalFDR/lymph.nolocalFDR.0.05.list';
+my $fasta = shift or die "ERROR: $0 lymph.0.05.list fasta\nPlease input 'fasta' file\n" ;#"result_v5/TISSUE/HSE/junctionPep/lymph.fa";
 
+die "ERROR: '$in' file not exists\n" if !-e $in;
 # read fasta file
 my $seq = readSeq();
 
@@ -22,7 +23,7 @@ while(<IN>){
 	}
 	next if /^#|^===|^\//;
 	my ($tag, $j) = (split /\t/)[4,5];
-	next if $tag eq 'N';
+	next if $tag eq 'N';	
 	my @arr = split /,|_/,$j;
 	my $id = join "_", @arr[0,1,2,4];	
 	$junction{$id}{$j."_".$head} = $seq->{$j."_".$head};

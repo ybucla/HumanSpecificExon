@@ -6,7 +6,7 @@ use File::Basename;
 use Data::Table;
 use 5.010;
 
-my $in = shift; # 'liver'
+my $in = shift or die "ERROR: $0 liver\n"; # 'liver'
 my $fasta = "single_junctionPep/$in*";
 
 # read fasta file
@@ -59,7 +59,8 @@ sub readSeq {
 			if(/>/){
 				($id = $_) =~ s/>//g;
 			}else{
-				$seq{$id."_".$basename} = $_;
+				#$seq{$id."_".$basename} = $_;
+				$seq{$id} = $_;
 			}
 		}
 		close IN;

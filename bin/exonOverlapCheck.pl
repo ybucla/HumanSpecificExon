@@ -10,37 +10,56 @@ use List::Util qw( min max);
 use List::MoreUtils qw(uniq);
 use 5.010;
 
-my $resultfile = '../GM18486.0.05.list';# '../result_v5/LCLs/Alu_all.0.05_0.01.list';
-my $exonbedfile = '../data/Ensembl/exon.unique.bed';
+my $resultfile = shift or die USAGE();# 'result_v5/LCLs/Alu_all/Alu_all.0.05.list';# '../result_v5/LCLs/Alu_all.0.05_0.01.list';
+my $exonbedfile = './data/Ensembl/exon.unique.bed';
+
+die USAGE() if !-e $resultfile;
 
 # result 2 bed
 my $hash = result2bed($resultfile);
 
 # get overlaped exon with same junction
-foreach(keys %{$hash}){
-	next if !/GM18486/;
+foreach(sort{$a cmp $b} keys %{$hash}){
+	#next if !/GM18870/;
+	say '======'.$_;
+	say "# obtain exon overlap result from '$_'";
+	say "# bedfile: $exonbedfile";
+	say "# peptide\tstart\tend\tsplice\ttag\tid\tseq\tqvalue\toverlap";
 	my $junctionbed = 'tmp/tmp_'.$_;
 	my @r = `bedtools intersect -a $junctionbed -b $exonbedfile -s -wo`;
+	
 	my %result = ();
 	foreach my $line(@r){
+		chomp($line);
 		my @ele = split /\t/, $line;
 		my $junctionLen = $ele[2] - $ele[1];
 		my $overlapLen = $ele[12];
-		my $id = join "_",(split /_/,$ele[3])[0..7];
-		my $pep = (split /_/,$ele[3])[9];
+		my $id = join "_",(split /_/,$ele[3])[0..8];
+		my $strand = $ele[5];
+		my $pep = (split /_/,$ele[3])[11];
 		next if $overlapLen != $junctionLen;
-		$result{$_}{$pep}{$id}{(join ":",@ele[6,9,11])} = '';
+		if($pep =~ /[a-z]/){ # if the comet peptide cross the junction sites
+			if(($ele[3] =~ /left/ && $strand eq '+') or ($ele[3] =~ /right/ && $strand eq '-')){
+				$result{$_}{$pep}{$id}{(join ":",@ele[6,9,11])} = '' if $ele[2] == $ele[8];
+			}
+			if(($ele[3] =~ /left/ && $strand eq '-') or ($ele[3] =~ /right/ && $strand eq '+')){
+				$result{$_}{$pep}{$id}{(join ":",@ele[6,9,11])} = '' if $ele[1] == $ele[7];
+			}
+		}else{ # if the comet peptide fall into one side of junction
+			$result{$_}{$pep}{$id}{(join ":",@ele[6,9,11])} = '';
+		}
 	}
 	# check whether a pep could be mapped to mutiple exon peptides? if so discard it, else keep
 	foreach my $pep(keys %{$result{$_}}){
 		foreach my $id(keys %{$result{$_}{$pep}}){
 			my $len = scalar(keys %{$result{$_}{$pep}{$id}});
-			#next if $len > 1;
+			next if $len > 1;
 			say $hash->{$_}{$pep}{$id},"\t",$len;
 		}
 	}
 }
 
+#system("rm -rf tmp/");
 
 sub result2bed {
 	my $in = shift; # 
@@ -50,11 +69,12 @@ sub result2bed {
 	open IN, $in;
 	while(<IN>){
 		chomp;
-		($head = $_) =~ s/======|\.rna//g if /==/;
+		($head = $_) =~ s/======|\..*$//g if /==/;
 		next if /#|=/;
-		my ($pep, $s, $e, $splice, $tag, $id, $seq) = split;
+		my ($pep, $s, $e, $splice, $tag, $id, $seq, $qvalue) = split;
 		next if $tag eq 'N';
-		$hash{$head}{$pep}{$id} = $_;
+		$pep = substr($seq, $s, $e-$s+1);
+		$hash{$head}{$pep}{$id} = join "\t", ($pep, $s, $e, $splice, $tag, $id, $seq, $qvalue);
 	}
 	close IN;
 	# write junction (Y) to bed
@@ -64,28 +84,62 @@ sub result2bed {
 		my $tmpout = $tmpdir.'/tmp_'.$_;
 		open OUT, '>'.$tmpout;
 		foreach my $pep(keys %{$hash{$_}}){
-			foreach my $i(keys %{$hash{$_}{$pep}}){
+			foreach my $i(keys %{$hash{$_}{$pep}}){				
 				my $line = $hash{$_}{$pep}{$i};
-				my ($peptide, $s, $e, $splice, $tag, $id, $seq) = split /\t/, $line;	
+				my ($peptide, $s, $e, $splice, $tag, $id, $seq) = split /\t/, $line;
 				my @arr = split /_/,$id;
 				my ($chr, $strand) = @arr[0,4];
 				my ($left, $jl) = (split /,/,$arr[5])[0,2];
 				my ($jr, $right) = (split /,/,$arr[6])[0,2];
+				my ($startTrim, $ORF) = @arr[7,8];
+				$startTrim =~ s/startTrim://g;
+				$ORF =~ s/ORF://g;
+				$startTrim = $startTrim + $s;
+				my $endPos = 1;
 				foreach my $ss((split/;/,$splice)){
 					my ($splice_s, $splice_e) = split /-/, $ss;
+					next if $e < $splice_s or $splice_e < $s;
 					my @num = sort($s, $e, $splice_s, $splice_e);
-					my $p = substr($seq, $num[1], $num[2]-$num[1]+1);
-					if($splice_s > 0){
+					if($pep =~ /[a-z]/){ # peptide include splicing site
+						my $startPos = $strand eq '+' ? ($left+$ORF+$startTrim*3) : ($right-$ORF-$startTrim*3);
 						if($strand eq '+'){
-							say OUT join "\t", ($chr,$jr-1,$right,$id."_right_".$peptide."_".$_,0,$strand);
-						}else{
-							say OUT join "\t", ($chr,$left-1,$jl,$id."_right_".$peptide."_".$_,0,$strand);
+							$endPos = length($peptide) * 3 - ($jl - $startPos + 1) + $jr - 1;
+							if($splice_s > 0){
+								say OUT join "\t", ($chr,$jr-1,$endPos,$id."_index:$s"."_right_".$pep."_".$_,0,$strand);
+							}else{
+								say OUT join "\t", ($chr,$startPos-1,$jl,$id."_index:$s"."_left_".$pep."_".$_,0,$strand);
+							}
+						}else{							
+							$endPos = $jl + 1 - (length($peptide) * 3 - ($startPos - $jr + 1));
+							if($splice_s > 0){
+								say OUT join "\t", ($chr,$endPos-1,$jl,$id."_index:$s"."_right_".$pep."_".$_,0,$strand);
+							}else{
+								say OUT join "\t", ($chr,$jr-1,$startPos,$id."_index:$s"."_left_".$pep."_".$_,0,$strand);
+							}
 						}
-					}else{
+					}else{ # peptide include no splicing site
 						if($strand eq '+'){
-							say OUT join "\t", ($chr,$left-1,$jl,$id."_left_".$peptide."_".$_,0,$strand);
+							my $startPos = $left+$ORF+$startTrim*3;
+							if($startTrim*3 - 1 >= abs($jl - $left - $ORF)){
+								$startPos = $jr + $startTrim*3 - abs( $jl - $left - $ORF) - 1 - 1 + 1;
+							}			
+							$endPos = $startPos - 1 + length($peptide) * 3;
+							if($splice_s > 0){
+								say OUT join "\t", ($chr,$startPos-1,$endPos,$id."_index:$s"."_right_".$pep."_".$_,0,$strand);
+							}else{
+								say OUT join "\t", ($chr,$startPos-1,$endPos,$id."_index:$s"."_left_".$pep."_".$_,0,$strand);
+							}
 						}else{
-							say OUT join "\t", ($chr,$jr-1,$right,$id."_left_".$peptide."_".$_,0,$strand);
+							my $startPos = $right-$ORF-$startTrim*3;
+							if($startTrim*3 - 1 >= abs($right - $ORF - $jr)){
+								$startPos = $jl - ($startTrim*3 - abs($right - $jr - $ORF) - 1) + 1 - 1;
+							}
+							$endPos = $startPos + 1 - length($peptide) * 3;
+							if($splice_s > 0){
+								say OUT join "\t", ($chr,$endPos-1,$startPos,$id."_index:$s"."_right_".$pep."_".$_,0,$strand);
+							}else{
+								say OUT join "\t", ($chr,$endPos-1,$startPos,$id."_index:$s"."_left_".$pep."_".$_,0,$strand);
+							}
 						}
 					}
 				}
@@ -127,4 +181,9 @@ sub translate {
 		push @result, $pep;
 	}
 	return \@result;
+}
+
+sub USAGE {
+my $str = "USAGE: $0 file.list(bin/tjScript result)\n";
+return $str;
 }
