@@ -111,7 +111,7 @@ foreach(keys %pephash){
 
 foreach my $peptide(keys %info){
 	my @k = @{$info{$peptide}};
-	#say $_,"\t",$chrPepHash{$peptide} for @k;
+	say $_,"\t",$chrPepHash{$peptide} for @k;
 }
 
 my $localResult = localFDR(\%chrPepHash);
@@ -119,7 +119,7 @@ my @arr = split /\R/, $localResult;
 foreach(@arr){
 	my @ele = split /\t/;
 	my @k = @{$info{$ele[0]}};
-	say $_,"\t",$chrPepHash{$ele[0]} for @k;
+	#say $_,"\t",$chrPepHash{$ele[0]} for @k;
 }
 
 
