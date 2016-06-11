@@ -9,10 +9,10 @@ use Data::Table;
 use 5.010;
 
 #parse_SJ($ARGV[0]);
-#translateJuncStar($ARGV[0]);
+translateJuncStar($ARGV[0]);
 #removeIdenJunc($ARGV[0]);
 #callCometSearch($ARGV[0],$ARGV[1]);
-callPercolator($ARGV[0]);
+#callPercolator($ARGV[0]);
 #callRiboJunctionReadsNumber($ARGV[0]);
 #callannotation_translateJunc_star($ARGV[0]);
 

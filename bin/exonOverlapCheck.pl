@@ -14,7 +14,8 @@ my $resultfile = shift or die USAGE();
 my $bedfile = shift or die USAGE();
 my $SJfile = shift or die USAGE();
 
-die USAGE() if !-e $resultfile;
+die "[ERROR] '$resultfile' not exists!\n".USAGE() if !-e $resultfile;
+die "[ERROR] '$bedfile' not exists!\n".USAGE() if !-e $bedfile;
 
 # file build-in
 my $exonbedfile = './data/Ensembl/exon.unique.bed';
@@ -38,7 +39,7 @@ my @cat = `cat $exonbedfile $bedfile > tmp/exon.bed`;
 # get overlaped exon with same junction
 warn "[log]# analysis peptide and exon overlaping\n";
 foreach(sort{$a cmp $b} keys %{$hash}){	
-	#next if !/GM19102/;
+	#next if !/GM19147/;
 	warn "[log]# ======$_\n";
 	say '======'.$_;
 	say "# obtain exon overlap result from '$_'";
@@ -51,6 +52,7 @@ foreach(sort{$a cmp $b} keys %{$hash}){
 	my %uni = ();
 	foreach my $line(@r){
 		chomp($line);
+		#next if $line !~ /chr11_3383119_3392205_chr11_-_3383031/;
 		my @ele = split /\t/, $line;
 		my $junctionLen = $ele[2] - $ele[1];
 		my $overlapLen = $ele[12];
@@ -62,10 +64,10 @@ foreach(sort{$a cmp $b} keys %{$hash}){
 		next if $overlapLen != $junctionLen;
 		next if !exists $SJhash->{$_}{$ele[7]} && !exists $SJhash->{$_}{($ele[8]+1)};
 		if($pep =~ /[a-z]/){ # if the comet peptide cross the junction sites
-			if(($ele[3] =~ /left/ && $strand eq '+') or ($ele[3] =~ /right/ && $strand eq '-')){
+			if(($ele[3]=~/left/ && $strand eq '+') or ($ele[3]=~/right/ && $strand eq '-')){
 				$uni{$_}{$pepCor}{$str} = '' if $ele[2] == $ele[8];
 			}
-			if(($ele[3] =~ /left/ && $strand eq '-') or ($ele[3] =~ /right/ && $strand eq '+')){
+			if(($ele[3]=~/left/ && $strand eq '-') or ($ele[3]=~/right/ && $strand eq '+')){
 				$uni{$_}{$pepCor}{$str} = '' if $ele[1] == $ele[7];
 			}
 		}else{
@@ -121,26 +123,47 @@ sub result2bed {
 				$ORF =~ s/ORF://g;
 				$startTrim = $startTrim + $s;
 				my $endPos = 1;
+				$seq =~ m/[a-z]/g;
+				my $splice_pos = pos($seq) - 1;
 				foreach my $ss((split/;/,$splice)){
 					#warn $line,"\n" if $splice eq '17-52;0-17' && $pep =~ /YLLDLRNTSTPFKG/i;
 					my ($splice_s, $splice_e) = split /-/, $ss;
 					next if $e < $splice_s or $splice_e < $s;
-					my @num = sort($s, $e, $splice_s, $splice_e);
 					if($pep =~ /[a-z]/){ # peptide include splicing site
 						my $startPos = $strand eq '+' ? ($left+$ORF+$startTrim*3) : ($right-$ORF-$startTrim*3);
 						if($strand eq '+'){
 							$endPos = length($peptide) * 3 - ($jl - $startPos + 1) + $jr - 1;
-							if($splice_s > 0){
-								say OUT join "\t", ($chr,$jr-1,$endPos,$id."_index:$s"."_right_".$pep."_".$_,0,$strand);
+							if($startPos > $jl){
+								$startPos = $jr + ($startPos - $jl) - 1;
+								$endPos = length($peptide) * 3 + $startPos - 1;
+							}
+							if($splice_s == $splice_pos){
+								if($startPos > $jl){
+									say OUT join "\t", ($chr,$startPos-1,$endPos,$id."_index:$s"."_right_".$pep."_".$_,0,$strand);
+								}else{
+									say OUT join "\t", ($chr,$jr-1,$endPos,$id."_index:$s"."_right_".$pep."_".$_,0,$strand);
+								}
 							}else{
-								say OUT join "\t", ($chr,$startPos-1,$jl,$id."_index:$s"."_left_".$pep."_".$_,0,$strand);
+								if($startPos > $jl){}else{
+									say OUT join "\t", ($chr,$startPos-1,$jl,$id."_index:$s"."_left_".$pep."_".$_,0,$strand);
+								}
 							}
 						}else{							
 							$endPos = $jl + 1 - (length($peptide) * 3 - ($startPos - $jr + 1));
-							if($splice_s > 0){
-								say OUT join "\t", ($chr,$endPos-1,$jl,$id."_index:$s"."_right_".$pep."_".$_,0,$strand);
+							if($startPos < $jr){
+								$startPos = $jl - ($jr - $startPos) + 1;
+								$endPos = $startPos + 1 - length($peptide) * 3;
+							}
+							if($splice_s == $splice_pos){
+								if($startPos < $jr){
+									say OUT join "\t", ($chr,$endPos-1,$startPos,$id."_index:$s"."_right_".$pep."_".$_,0,$strand);
+								}else{
+									say OUT join "\t", ($chr,$endPos-1,$jl,$id."_index:$s"."_right_".$pep."_".$_,0,$strand);
+								}
 							}else{
-								say OUT join "\t", ($chr,$jr-1,$startPos,$id."_index:$s"."_left_".$pep."_".$_,0,$strand);
+								if($startPos < $jr){}else{
+									say OUT join "\t", ($chr,$jr-1,$startPos,$id."_index:$s"."_left_".$pep."_".$_,0,$strand);
+								}
 							}
 						}
 					}else{ # peptide include no splicing site
@@ -150,7 +173,7 @@ sub result2bed {
 								$startPos = $jr + $startTrim*3 - abs( $jl - $left - $ORF) - 1 - 1 + 1;
 							}			
 							$endPos = $startPos - 1 + length($peptide) * 3;
-							if($splice_s > 0){
+							if($splice_s == $splice_pos){
 								say OUT join "\t", ($chr,$startPos-1,$endPos,$id."_index:$s"."_right_".$pep."_".$_,0,$strand);
 							}else{
 								say OUT join "\t", ($chr,$startPos-1,$endPos,$id."_index:$s"."_left_".$pep."_".$_,0,$strand);
@@ -161,7 +184,7 @@ sub result2bed {
 								$startPos = $jl - ($startTrim*3 - abs($right - $jr - $ORF) - 1) + 1 - 1;
 							}
 							$endPos = $startPos + 1 - length($peptide) * 3;
-							if($splice_s > 0){
+							if($splice_s == $splice_pos){
 								say OUT join "\t", ($chr,$endPos-1,$startPos,$id."_index:$s"."_right_".$pep."_".$_,0,$strand);
 							}else{
 								say OUT join "\t", ($chr,$endPos-1,$startPos,$id."_index:$s"."_left_".$pep."_".$_,0,$strand);

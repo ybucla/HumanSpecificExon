@@ -34,9 +34,9 @@ sub tjPercolaotr {
 	#my $in = shift;
 	my $in = shift;
 
-	(my $dir = 'result_v5/LCLs/Alu_all/') =~ s/\/$//g;
+	(my $dir = 'result_v5/LCLs/Alu_CDS/') =~ s/\/$//g;
         my $fdr = 0.05;
-        my $bedfile = '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed';
+        my $bedfile = '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5_CDS_overlap.unique.sorted.bed';
 	my @rawfiles = `ls $dir/cometout/`;
 
         my %hash = ();
