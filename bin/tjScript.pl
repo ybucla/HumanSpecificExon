@@ -34,9 +34,9 @@ sub tjPercolaotr {
 	#my $in = shift;
 	my $in = shift;
 
-	(my $dir = 'result_v5/LCLs/Alu_CDS/') =~ s/\/$//g;
+	(my $dir = 'result_v5/LCLs/HSE/') =~ s/\/$//g;
         my $fdr = 0.05;
-        my $bedfile = '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5_CDS_overlap.unique.sorted.bed';
+        my $bedfile = '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/human_specific_exon.2073.sorted.bed';
 	my @rawfiles = `ls $dir/cometout/`;
 
         my %hash = ();
@@ -51,7 +51,7 @@ sub tjPercolaotr {
 	my $junction = $dir."/junctionPep/$hash{$in}.fa";
 	(my $percolator = $dir."/cometout/$hash{$in}/$fdr") =~ s/\/$//g;
 	#say "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator.pl $junction $percolator $bedfile";
-	system("/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator_fast.pl $junction $percolator $bedfile");
+	system("/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator_test.pl $junction $percolator $bedfile");
 	#system("rm -rf tmp");
 }
 
