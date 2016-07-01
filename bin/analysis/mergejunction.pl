@@ -22,19 +22,20 @@ foreach my $head(keys %{$seq}){
         $junction{$id}{$head} = $seq->{$head};
 }
 
-mkdir 'tmp' if !-e 'tmp';
+my $tmpdir = 'tmp_'.$in;
+mkdir $tmpdir if !-e $tmpdir;
 foreach my $k1(keys %junction){
 	#next if scalar(keys %{$junction{$k1}}) < 2; # output junction above 2
-	open OUT, ">tmp/".$k1;
+	open OUT, ">$tmpdir/".$k1;
 	foreach my $k2(keys %{$junction{$k1}}){
 		say OUT ">",$k2,"\n",$junction{$k1}{$k2};
 	}
 	close OUT;
 	# cdhit search
-	cdhit("tmp/".$k1);
+	cdhit("$tmpdir/".$k1);
 }
 open OUT, ">$in.fa";
-my @result = `cat tmp/*.clstr`;
+my @result = `cat $tmpdir/*.clstr`;
 foreach(@result){
 	chomp;
 	if(/>(.*)\.\.\.\s+\*/){
@@ -43,7 +44,7 @@ foreach(@result){
 }
 close OUT;
 
-system("rm -rf tmp/");
+system("rm -rf $tmpdir/");
 
 # --sub--
 sub readSeq {

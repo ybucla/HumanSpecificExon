@@ -23,11 +23,37 @@ say "# obtain percolator result from '$sample' with fdr '$fdr'";
 say "# bedfile: $bed";
 my @peparr = `awk -F '\t' '\$3 < $fdr' $args[1]/*.pep.percolator | cut -f 4,5`;
 my %pephash;
+my %seqhash;
 foreach(0..$#peparr){
 	my @line = split /\t/, $peparr[$_];	
 	(my $p = $line[1]) =~ s/\R|\.|\*|-//g;
 	$pephash{$p} = $line[0];
+	$seqhash{"seq_".$_} = $p;
 }
+
+say "# building index for chr.. seq";
+my %lenSeqHash;
+my $hid = '';
+open FAIN, $args[0];
+while(<FAIN>){
+	chomp;
+	if(/>(.*)/){
+		$hid = $1;
+	}else{
+		$lenSeqHash{length($_)}{$hid} = '';
+	}
+}
+close FAIN;
+
+# store len -> arrindex
+my $index = 0;
+my @arrSeq = ();
+my %arrHash = ();
+foreach(sort{$a<=>$b} keys %lenSeqHash){
+	$arrHash{$_} = scalar(@arrSeq) + 1 - 1;
+	push @arrSeq, keys %{$lenSeqHash{$_}};
+}
+
 
 say "# read junction pep and write to bed";
 my %seq;
@@ -90,7 +116,9 @@ say "# peptide\tstart\tend\tsplice\ttag\tid\tseq";
 my %chrPepHash = ();
 my %info = ();
 foreach(keys %pephash){
-	foreach my $i(keys %seq){
+	my $len = length($_);
+	my $index = $arrHash{$len};
+	foreach my $i(@arrSeq[$index..$#arrSeq]){	
 		my $index = index(uc($seq{$i}),uc($_));
 		if($index != -1){
 			my ($start, $end) = ($index, (length($_) + $index - 1));

@@ -231,7 +231,7 @@ def read_junctions(file, reads, min_reads):  # [chr, id, strand, left_junction, 
 def junctionReads(sam_fn):  # bam file input
 # store reads id that mapped to human_epcific_exon to a dict
 	exonid = {}
-	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/human_specific_exon.2073.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	for line in d.stdout.readlines():
 		line = line.rstrip()
 		ele = line.split()
@@ -276,30 +276,22 @@ def junctionReads(sam_fn):  # bam file input
 	return junctionReads	
 
 def junctionFilter(junctionReads, out):
+	exonHashList = defaultdict(list)
 	junctionReads_filter = []
-	tmpbed = 'x' + str(random.randint(1000000, 9999999))+'-' + out.split('/')[-1]
-	with open(tmpbed, 'w') as out:
-		for i in junctionReads:
-			id = i[0]+";"+i[1]+";"+i[2]+";"+str(i[3][0])+"_"+str(i[3][1])+"_"+str(i[4][0])+"_"+str(i[4][1])
-			line_left = i[0]+"\t"+str( i[3][0] - 1 )+"\t"+str(i[3][1])+"\t"+id
-			line_right = i[0]+"\t"+str( i[4][0] - 1 )+"\t"+str(i[4][1])+"\t"+id
-			out.write(line_left+"\t0\t"+i[2]+"\n")
-			out.write(line_right+"\t0\t"+i[2]+"\n")
-	p = subprocess.Popen('bedtools coverage -a ' + tmpbed + ' -b /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/human_specific_exon.2073.sorted.bed -s', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-	tmphash = defaultdict(list)
-	for line in p.stdout.readlines():
-                line = line.rstrip()
-		ele = line.split()
-		if int(ele[6]) > 0:
-			if ele[3] not in tmphash:
-				arr = ele[3].split(';')
-				sites = arr[3].split('_')
-				junctionReads_filter.append([arr[0],arr[1],arr[2],[int(sites[0]),int(sites[1])],[int(sites[2]),int(sites[3])]])
-				tmphash[ele[3]] = ''
-	retval = p.wait()
-	os.remove(tmpbed)
+	with open('/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed', 'r') as f:
+		for line in f:
+			line = line.rstrip()
+			ele = line.split('\t')
+			keyl = ele[0]+'_'+ele[5]+'_'+'exonLeft'+'_'+str(int(ele[1])+1)
+			keyr = ele[0]+'_'+ele[5]+'_'+'exonRight'+'_'+ele[2]
+			exonHashList[keyl].append(line)
+			exonHashList[keyr].append(line)
+	for i in junctionReads:
+		keyl = i[0]+'_'+i[2]+'_'+'exonLeft'+'_'+str(i[4][0])
+		keyr = i[0]+'_'+i[2]+'_'+'exonRight'+'_'+str(i[3][1])
+		if keyl in exonHashList or keyr in exonHashList:
+			junctionReads_filter.append(i)
 	return junctionReads_filter
-	
 	
 if __name__=='__main__':
 	main()

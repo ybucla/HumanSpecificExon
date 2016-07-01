@@ -53,6 +53,18 @@ foreach(sort{$a<=>$b} keys %lenSeqHash){
 	push @arrSeq, keys %{$lenSeqHash{$_}};
 }
 
+say '# read bed file and generate position Hash';
+my %exonPosHash = ();
+open IN, $bed;
+while(<IN>){
+	chomp;
+	my @ele = split;
+	(my $str = $_) =~ s/\t/_/g;
+	push @{$exonPosHash{$ele[0].'_'.$ele[5].'exonLeft'}{$ele[1]+1}}, $str;
+	push @{$exonPosHash{$ele[0].'_'.$ele[5].'exonRight'}{$ele[2]}}, $str;
+}
+close IN;
+
 say "# read junction pep and write to bed";
 my %seq;
 my $head = '';
@@ -157,11 +169,56 @@ foreach(keys %pephash){
 				my ($s, $e) = split /-/,$k2;
 				my $min = min($s, $e, $start, $end);
 				my $max = max($s, $e, $start, $end);
-				$tag = 'Y' if ($end - $start + 1 + $e - $s + 1) > ($max - $min + 2);
+				$tag = 'Y' if abs($end - $start) + 1 + abs($e - $s) + 1 > ($max - $min + 1);
 			}
-			#say $_,"\t",$start,"\t",$end,"\t",$k,"\t",$tag,"\t",$i,"\t",$seq{$i};
 			$chrPepHash{$_} = $pephash{$_};
-			push @{$info{$_}}, $_."\t".$start."\t".$end."\t".$k."\t".$tag."\t".$i."\t".$seq{$i};
+			my ($chr, $jl, $jr, $strand, $annol, $annor, $startTrim, $ORF) = (split /_/,$i)[0,1,2,4,5,6,7,8];
+			$startTrim =~ s/startTrim://g;
+			$ORF =~ s/ORF://g;
+			$startTrim += $start;
+			my $l = (split /,/, $annol)[0];
+			my $r = (split /,/, $annor)[2];
+			my $startPos = $strand eq '+' ? ($l+$startTrim*3+$ORF) : ($r-$startTrim*3-$ORF);
+			if($strand eq '+' && $startPos > $jl){
+                        	$startPos = $jr + $startPos - $jl - 1;              
+			}
+			if($strand eq '-' && $startPos < $jr){
+                                $startPos = $jl - ($jr - $startPos) + 1;
+                        }
+			my $endPos = $strand eq '+' ? ($startPos-1+length($_)*3) : ($startPos+1-length($_)*3);
+			if($strand eq '+' && $startPos <= $jl && $endPos > $jl){
+				$endPos = $jr + $endPos - $jl - 1;
+			}
+			if($strand eq '-' && $startPos >= $jr && $endPos < $jr){
+                                $endPos = $jl - ($jr - $endPos) + 1;
+                        }
+			#say $_,"\t",$startTrim,"\t",$ORF,"\t",$startPos,"\t",$endPos,"\t",$i if $_ =~ /RGLSQSALPYRR/;
+			my $exons = '';
+			if(exists $exonPosHash{$chr.'_'.$strand.'exonLeft'}{$jr}){
+				my @arr = @{$exonPosHash{$chr.'_'.$strand.'exonLeft'}{$jr}};
+				say 'right: ',join ';',@arr if $_ =~ /RGLSQSALPYRR/;
+				foreach my $a(@arr){
+					my ($minLeft,$maxRight) = (split /_/,$a)[1,2];
+					$minLeft = $minLeft + 1;
+					my @p = sort($maxRight, $minLeft, $startPos, $endPos);
+					my $dis = abs($maxRight-$minLeft)+1+ abs($endPos-$startPos)+1;
+					my $overlapStatus = abs($p[3]-$p[0])+1 < $dis ? 1 : 0;
+					$exons = $a.';'.$exons if $maxRight >= $startPos && $maxRight >= $endPos && $overlapStatus == 1;
+				}
+			}
+			if(exists $exonPosHash{$chr.'_'.$strand.'exonRight'}{$jl}){
+				my @arr = @{$exonPosHash{$chr.'_'.$strand.'exonRight'}{$jl}};
+				say 'left: ',join ';',@arr if $_ =~ /RGLSQSALPYRR/;
+                                foreach my $a(@arr){
+                                        my ($minLeft,$maxRight) = (split /_/,$a)[1,2];
+					$minLeft = $minLeft + 1;
+					my @p = sort($maxRight, $minLeft, $startPos, $endPos);
+                                        my $dis = abs($maxRight-$minLeft)+1+ abs($endPos-$startPos)+1;
+                                        my $overlapStatus = abs($p[3]-$p[0])+1 < $dis ? 1 : 0;
+					$exons = $a.';'.$exons if $minLeft <= $startPos && $minLeft <= $endPos && $overlapStatus == 1;
+                                }
+                        }
+			push @{$info{$_}}, $_."\t".$start."\t".$end."\t".$k."\t".$tag."\t".$i."\t".$seq{$i}."\t".$exons."\t".$startPos."\t".$endPos;
 		}
 	}
 }

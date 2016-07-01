@@ -6,14 +6,14 @@ use strict;
 use warnings;
 use File::Basename;
 use Data::Table;
-use List::Util qw( min max);
+use List::Util qw( min max );
 use List::MoreUtils qw(uniq);
 use 5.010;
 
 my $resultfile = shift or die USAGE();
 my $bedfile = shift or die USAGE();
-my $SJfile = shift or die USAGE();
-my $Aluelement = shift || 'true';
+my $SJfile = shift || 'data/SJ_out/GM18486.rna.SJ';
+my $Aluelement = shift || 'false';
 
 die "[ERROR] '$resultfile' not exists!\n".USAGE() if !-e $resultfile;
 die "[ERROR] '$bedfile' not exists!\n".USAGE() if !-e $bedfile;

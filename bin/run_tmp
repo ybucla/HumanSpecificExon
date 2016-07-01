@@ -9,10 +9,10 @@ use Data::Table;
 use 5.010;
 
 #parse_SJ($ARGV[0]);
-#translateJuncStar($ARGV[0]);
+translateJuncStar($ARGV[0]);
 #removeIdenJunc($ARGV[0]);
 #callCometSearch($ARGV[0],$ARGV[1]);
-callPercolator($ARGV[0]);
+#callPercolator($ARGV[0]);
 #callRiboJunctionReadsNumber($ARGV[0]);
 #callannotation_translateJunc_star($ARGV[0]);
 
@@ -46,7 +46,7 @@ sub translateJuncStar {
 	# add tempory
 	my @arr = split/_/, $hash{$in};
 	pop(@arr);
-	$tissue = '~/scratch/Mathias_Wilhelm/RNA/'.(join "_", @arr);
+	$tissue = '~/scratch/Lan/'.(join "_", @arr);
 	# add end
 	
                                                                
@@ -86,9 +86,9 @@ sub callCometSearch {
 	my $db = "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/massDb/merge_".basename($indb).".fa";
 	my $outdir = "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/cometout/".basename($indb);
 	mkdir $outdir if !-e $outdir;
-	#my $rawdir = "/u/home/y/ybwang/scratch/Yoav_Gilad_proteom/".basename($indb);
+	my $rawdir = "/u/home/y/ybwang/scratch/Yoav_Gilad_proteom/".basename($indb);
 	(my $proteomedb = basename($indb)) =~ s/_LV\d+$//g;
-	my $rawdir = "/u/home/y/ybwang/scratch/Mathias_Wilhelm/PROTEOMICS/".basename($indb);
+	#my $rawdir = "/u/home/y/ybwang/scratch/Mathias_Wilhelm/PROTEOMICS/".$proteomedb;
 	$rawdir =~ s/\..*$//g;
 	my @rawfiles = `ls $rawdir/*.raw`;
 
@@ -107,7 +107,7 @@ sub callCometSearch {
 sub callPercolator {
         my $in = shift or die "$0 raw db"; # GM19127.rna
 	
-	my $dir = 'newresult/TISSUE/HSE/cometout';
+	my $dir = 'newresult/Lan/Alu_all/cometout';
         my @rawfiles = `ls $dir`;
 
         my %hash = ();
