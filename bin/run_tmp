@@ -9,10 +9,10 @@ use Data::Table;
 use 5.010;
 
 #parse_SJ($ARGV[0]);
-translateJuncStar($ARGV[0]);
+#translateJuncStar($ARGV[0]);
 #removeIdenJunc($ARGV[0]);
 #callCometSearch($ARGV[0],$ARGV[1]);
-#callPercolator($ARGV[0]);
+callPercolator($ARGV[0]);
 #callRiboJunctionReadsNumber($ARGV[0]);
 #callannotation_translateJunc_star($ARGV[0]);
 
@@ -107,7 +107,7 @@ sub callCometSearch {
 sub callPercolator {
         my $in = shift or die "$0 raw db"; # GM19127.rna
 	
-	my $dir = 'newresult/Lan/Alu_all/cometout';
+	my $dir = 'newresult/Lan/HSE/cometout';
         my @rawfiles = `ls $dir`;
 
         my %hash = ();

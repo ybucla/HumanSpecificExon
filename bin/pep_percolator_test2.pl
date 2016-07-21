@@ -10,10 +10,15 @@ use List::Util qw( min max);
 use List::MoreUtils qw(uniq);
 use 5.010;
 
+my $start_run = time();
+
+# -----------------------------
 my @args = @ARGV or die usage(); # result_v5/Alu/junctionPep/GM18486.rna.fa result_v5/Alu/cometout/GM18486.rna/0.05
 die usage() if scalar(@args) < 2;
 
 my $bed = $args[2]; # "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5_CDS.unique.sorted.bed";
+
+my $SJdir = $args[3]; # /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/TISSUE
 
 (my $sample = basename($args[0])) =~ s/\.fa//g;;
 my $fdr = basename($args[1]);
@@ -28,6 +33,21 @@ foreach(0..$#peparr){
 	(my $p = $line[1]) =~ s/\R|\.|\*|-//g;
 	$pephash{$p} = $line[0];
 	$seqhash{"seq_".$_} = $p;
+}
+
+my %junctionHash = ();
+say '# building index for junction SJ.out.tab';
+my @SJfiles = glob "$SJdir/$sample*";
+foreach my $f(@SJfiles){
+	open IN, $f;
+	while(<IN>){
+		chomp;
+		my @ele = split /\t/;
+		my $strand = $ele[3] eq '1' ? '+' : '-';
+		my $junction = $ele[0].'_'.($ele[1]-1).'_'.($ele[2]+1).'_'.$strand;
+		$junctionHash{$junction} = $ele[5];
+	}
+	close IN;
 }
 
 say "# building index for chr.. seq";
@@ -45,7 +65,6 @@ while(<FAIN>){
 close FAIN;
 
 # store len -> arrindex
-my $index = 0;
 my @arrSeq = ();
 my %arrHash = ();
 foreach(sort{$a<=>$b} keys %lenSeqHash){
@@ -98,8 +117,7 @@ foreach(@r){
 	my $strand = $line[5];
 	my $loc = (split /_/, $line[3])[-1];
 	(my $id = $line[3]) =~ s/_left|_right//g;
-	(my $seq = $seq{$id}) =~ m/[a-z]/g;
-	my $splice = pos($seq) - 1;
+	my $seq = $seq{$id};
 	# find startPos
 	my ($ja,$jb,$trimaa,$orf) = (split /_/,$id)[5,6,7,8];
 	$trimaa =~ s/startTrim://g;
@@ -123,7 +141,7 @@ foreach(@r){
 			}
 		}else{
 			if($a3 >= $startPos or $startPos == $b1){
-				my $s = aaindex($startPos, $a3+1) - 1;
+				my $s = $startPos == $b1 ? 0 : (aaindex($startPos, $a3+1) - 1);
 				$exonloc{$id}{$s.'-'.(length($seq)-1)} = $strand."\t".$loc;
 			}else{
 				$exonloc{$id}{'NA-NA'} = $strand."\t".$loc;
@@ -133,7 +151,7 @@ foreach(@r){
 	}else{
 		if($loc eq 'left'){
 			if($b1 <= $startPos or $startPos == $a3){
-				my $s = aaindex($startPos, $b1-1) - 1;
+				my $s = $startPos == $a3 ? 0 : (aaindex($startPos, $b1-1) - 1);
 				$exonloc{$id}{$s.'-'.(length($seq)-1)} = $strand."\t".$loc;
 			}else{
 				$exonloc{$id}{'NA-NA'} = $strand."\t".$loc;
@@ -150,14 +168,52 @@ foreach(@r){
 	}
 }
 
+
+say "# build index2 for chr.. seq";
+my %tmplen = ();
+my %tmpfirst = ();
+$tmpfirst{substr($_,0,1)}='' for keys %pephash;
+foreach(keys %seq){
+	my $s = uc($seq{$_});
+	foreach my $f (keys %tmpfirst){
+		my $i = index($s, $f);
+		next if $i == -1;
+		my $l = length($s)- $i;
+		$tmplen{$f}{$l}{$_} = '';
+	}
+}
+my %arrSeq2 = ();
+my %arrStart = ();
+foreach my $f(keys %tmplen){
+	foreach my $l(sort{$a<=>$b} keys %{$tmplen{$f}}){
+		if(exists $arrSeq2{$f}){
+			$arrStart{$f}{$l} = scalar(@{$arrSeq2{$f}}) + 1 - 1;
+			push @{$arrSeq2{$f}}, keys %{$tmplen{$f}{$l}};
+		}else{
+			$arrStart{$f}{$l} = 0;
+			my @t = keys %{$tmplen{$f}{$l}};
+			$arrSeq2{$f} = \@t;
+		}
+	}
+}
+
+
 say "# get peptide under fdr";
 say "# peptide\tstart\tend\tAlu_HSE_exon\ttag\tid\tseq";
 my %chrPepHash = ();
 my %info = ();
-foreach(keys %pephash){
+my $rnum=0;
+foreach(sort {$a cmp $b} keys %pephash){
+	$rnum++;
 	my $len = length($_);
 	my $index = exists $arrHash{$len} ? $arrHash{$len} : 0;
-	foreach my $i(@arrSeq[$index..$#arrSeq]){	
+	my $firstAA = substr($_,0,1);
+	my $iStart = exists $arrStart{$firstAA}{$len} ? $arrStart{$firstAA}{$len} : 0;
+	my $iEnd = scalar(@{$arrSeq2{$firstAA}})-1;
+	warn $rnum,"\t",$len,"\t",$firstAA,"\t",$iStart,"\t",$iEnd,"\n";
+	my @arr = @{$arrSeq2{$firstAA}};
+	foreach my $i(@arr[$iStart..$iEnd]){
+	#foreach my $i(@arrSeq[$index..$#arrSeq]){
 		my $index = index(uc($seq{$i}),uc($_));
 		if($index != -1){
 			my ($start, $end) = ($index, (length($_) + $index - 1));
@@ -192,7 +248,6 @@ foreach(keys %pephash){
 			if($strand eq '-' && $startPos >= $jr && $endPos < $jr){
                                 $endPos = $jl - ($jr - $endPos) + 1;
                         }
-			#say $_,"\t",$startTrim,"\t",$ORF,"\t",$startPos,"\t",$endPos,"\t",$i if $_ =~ /RGLSQSALPYRR/;
 			my $exons = '';
 			if(exists $exonPosHash{$chr.'_'.$strand.'exonLeft'}{$jr}){
 				my @arr = @{$exonPosHash{$chr.'_'.$strand.'exonLeft'}{$jr}};
@@ -223,21 +278,44 @@ foreach(keys %pephash){
 	}
 }
 
+my %novelChrPepHash = ();
 foreach my $peptide(keys %info){
 	my @k = @{$info{$peptide}};
+	foreach(@k){
+		my $head = (split /\t/,$_)[5];
+		my @arr = split /_/, $head;
+		my $junc = join '_', @arr[0,1,2,4];
+		die "ERROR:\t junction not exists in SJ.out.tab file\n$junc\n" if !exists $junctionHash{$junc};
+		if($junctionHash{$junc} == 0){
+			$novelChrPepHash{$peptide} = $chrPepHash{$peptide};
+		}
+	}
 	#say $_,"\t",$chrPepHash{$peptide} for @k;
 }
+warn "# num of pep from novel junction:\t",scalar(keys %novelChrPepHash),"\n";
+warn "# num of pep from annot junction:\t", scalar(keys %chrPepHash)-scalar(keys %novelChrPepHash),"\n";
 
-my $localResult = localFDR(\%chrPepHash);
+foreach my $peptide(keys %chrPepHash){
+	next if exists $novelChrPepHash{$peptide};
+	my @k = @{$info{$peptide}};
+	say $_,"\t",$chrPepHash{$peptide},"\t1" for @k;
+}
+
+my $localResult = localFDR(\%novelChrPepHash);
 my @arr = split /\R/, $localResult;
 foreach(@arr){
 	my @ele = split /\t/;
 	my @k = @{$info{$ele[0]}};
-	say $_,"\t",$chrPepHash{$ele[0]} for @k;
+	say $_,"\t",$chrPepHash{$ele[0]},"\t0" for @k;
 }
 
 
 #system("rm -rf tmp/");
+
+# ---------------------------------------
+my $end_run = time();
+my $run_time = $end_run - $start_run;
+warn "Job took $run_time seconds\n";
 
 sub aaindex {
 	my ($start, $end) = @_;
@@ -263,7 +341,7 @@ sub localFDR {
 	my @uniq = sort {$a<=>$b} uniq(values %{$chrPepHash});
 	warn "# glob FDR 5%:\t",scalar(keys %{$chrPepHash}),"\n";
 	foreach my $k(keys %{$chrPepHash}){
-		#say $k,"\t",$chrPepHash->{$k};
+		#warn $k,"\t",$chrPepHash->{$k},"\n";
 	}	
 	my $result = '';
 	my $FDR = 0.01;

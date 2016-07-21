@@ -5,6 +5,7 @@ from collections import defaultdict
 import re
 import subprocess
 import random
+import warnings
 
 def main():
 	usage = 'usage: %prog <options> star_output_folder'
@@ -213,6 +214,7 @@ def read_junctions(file, reads, min_reads):  # [chr, id, strand, left_junction, 
 			for tmp in reads[key]:
 				tmpdict[tmp[0]] = ''
 			if len(tmpdict) < min_reads:
+				#warnings.warn(key + "\t"+str(min_reads)+"\t"+str(len(tmpdict)))
 				continue
 			n = n + 1
 			read_ids, left, right = zip(*reads[key])
@@ -231,7 +233,7 @@ def read_junctions(file, reads, min_reads):  # [chr, id, strand, left_junction, 
 def junctionReads(sam_fn):  # bam file input
 # store reads id that mapped to human_epcific_exon to a dict
 	exonid = {}
-	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	d = subprocess.Popen('samtools view -b -q 255 ' + sam_fn + ' | bedtools intersect -a /u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/human_specific_exon.all.cc2.sorted.bed -b stdin -wa -wb -split -sorted', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	for line in d.stdout.readlines():
 		line = line.rstrip()
 		ele = line.split()
@@ -278,7 +280,7 @@ def junctionReads(sam_fn):  # bam file input
 def junctionFilter(junctionReads, out):
 	exonHashList = defaultdict(list)
 	junctionReads_filter = []
-	with open('/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed', 'r') as f:
+	with open('/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/human_specific_exon.all.cc2.sorted.bed', 'r') as f:
 		for line in f:
 			line = line.rstrip()
 			ele = line.split('\t')
@@ -291,6 +293,7 @@ def junctionFilter(junctionReads, out):
 		keyr = i[0]+'_'+i[2]+'_'+'exonRight'+'_'+str(i[3][1])
 		if keyl in exonHashList or keyr in exonHashList:
 			junctionReads_filter.append(i)
+	print "# junction derived from exon:\t"+str(len(junctionReads_filter))
 	return junctionReads_filter
 	
 if __name__=='__main__':

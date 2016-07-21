@@ -72,6 +72,7 @@ foreach(sort{$a cmp $b} keys %{$hash}){
 		my @ele = split /\t/, $line;
 		my $junctionLen = $ele[2] - $ele[1];
 		my $overlapLen = $ele[12];
+		next if $overlapLen != $junctionLen;
 		my $id = $ele[3];#join "_",(split /_/,$ele[3])[0..8];
 		my $strand = $ele[5];
 		my $pep = (split /_/,$ele[3])[11];

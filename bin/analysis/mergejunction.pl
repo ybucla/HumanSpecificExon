@@ -22,6 +22,8 @@ foreach my $head(keys %{$seq}){
         $junction{$id}{$head} = $seq->{$head};
 }
 
+open ROUT, ">$in.fa";
+
 my $tmpdir = 'tmp_'.$in;
 mkdir $tmpdir if !-e $tmpdir;
 foreach my $k1(keys %junction){
@@ -33,16 +35,24 @@ foreach my $k1(keys %junction){
 	close OUT;
 	# cdhit search
 	cdhit("$tmpdir/".$k1);
-}
-open OUT, ">$in.fa";
-my @result = `cat $tmpdir/*.clstr`;
-foreach(@result){
-	chomp;
-	if(/>(.*)\.\.\.\s+\*/){
-		say OUT '>',$1,"\n",$seq->{$1};
+	my @result = `cat $tmpdir/*.clstr`;
+	foreach(@result){
+        	chomp;
+	        if(/>(.*)\.\.\.\s+\*/){
+                	say ROUT '>',$1,"\n",$seq->{$1};
+        	}
 	}
+	system("rm $tmpdir/$k1*");
 }
-close OUT;
+#open OUT, ">$in.fa";
+#my @result = `cat $tmpdir/*.clstr`;
+#foreach(@result){
+#	chomp;
+#	if(/>(.*)\.\.\.\s+\*/){
+#		say OUT '>',$1,"\n",$seq->{$1};
+#	}
+#}
+close ROUT;
 
 system("rm -rf $tmpdir/");
 
@@ -74,5 +84,5 @@ sub cdhit {
 	my $out = $in.'.cdhit';
 	my $bin = '/u/home/y/ybwang/nobackup-yxing/program/cd-hit-v4.6.5-2016-0304/cd-hit';
 	say "$bin -i $in -d 0 -o $out -c 1.0 -n 5 -G 1 -g 1 -b 20 -s 0.0 -aL 0.0 -aS 0.0";
-	system("$bin -i $in -d 0 -o $out -c 1.0 -n 5 -G 1 -g 1 -b 20 -s 0.0 -aL 0.0 -aS 0.0");	
+	my @r = `$bin -i $in -d 0 -o $out -c 1.0 -n 5 -G 1 -g 1 -b 20 -s 0.0 -aL 0.0 -aS 0.0`;	
 }
