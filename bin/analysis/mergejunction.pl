@@ -83,6 +83,6 @@ sub cdhit {
 	my $in = shift;
 	my $out = $in.'.cdhit';
 	my $bin = '/u/home/y/ybwang/nobackup-yxing/program/cd-hit-v4.6.5-2016-0304/cd-hit';
-	say "$bin -i $in -d 0 -o $out -c 1.0 -n 5 -G 1 -g 1 -b 20 -s 0.0 -aL 0.0 -aS 0.0";
-	my @r = `$bin -i $in -d 0 -o $out -c 1.0 -n 5 -G 1 -g 1 -b 20 -s 0.0 -aL 0.0 -aS 0.0`;	
+	say "$bin -i $in -d 0 -o $out -c 1.0 -n 5 -l 5 -G 1 -g 1 -b 20 -s 0.0 -aL 0.0 -aS 0.0";
+	my @r = `$bin -i $in -d 0 -o $out -c 1.0 -n 5 -l 5 -G 1 -g 1 -b 20 -s 0.0 -aL 0.0 -aS 0.0`;	
 }

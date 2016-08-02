@@ -34,9 +34,9 @@ sub tjPercolaotr {
 	#my $in = shift;
 	my $in = shift;
 
-	(my $dir = 'newresult/TISSUE/AllHSE') =~ s/\/$//g;
+	(my $dir = 'newresult/TISSUE/Alu_all') =~ s/\/$//g;
         my $fdr = 0.05;
-        my $bedfile = '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/human_specific_exon.all.cc2.sorted.bed';
+        my $bedfile = '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/Ensembl_Alu_25bp_0.5.unique.sorted.bed';
 	my $SJdir = '/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/data/SJ_out/TISSUE';
 	my @rawfiles = `ls $dir/cometout/`;
 
@@ -51,8 +51,9 @@ sub tjPercolaotr {
 
 	my $junction = $dir."/junctionPep/$hash{$in}.fa";
 	(my $percolator = $dir."/cometout/$hash{$in}/$fdr") =~ s/\/$//g;
-	warn "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator_test2.pl $junction $percolator $bedfile $SJdir\n";
-	system("/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator_test2.pl $junction $percolator $bedfile $SJdir");
+	warn "/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator_test2parellel.pl $junction $percolator $bedfile $SJdir\n";
+	system("/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator_test2parellel.pl $junction $percolator $bedfile $SJdir");
+	#system("/u/home/y/ybwang/nobackup-yxing-PROJECT/HumanSpecificExon/bin/pep_percolator_test2parellel.pl $junction $percolator $bedfile $SJdir");
 	#system("rm -rf tmp");
 }
 
